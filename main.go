@@ -16,7 +16,7 @@ import (
 	"github.com/charmbracelet/wish/logging"
 
 	tea "github.com/charmbracelet/bubbletea"
-	//"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
@@ -99,12 +99,18 @@ func GetPublicKeyAuth(_ ssh.Context, key ssh.PublicKey) bool {
 
 
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
-	m := model{ name: "sshwitter" }
+	renderer := bubbletea.MakeRenderer(s)
+	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
+
+	m := model{ name: "sshwitter", txtStyle: txtStyle, quitStyle: quitStyle }
 	return m, []tea.ProgramOption{tea.WithAltScreen()}
 }
 
 type model struct {
 	name      string
+	txtStyle  lipgloss.Style
+	quitStyle  lipgloss.Style
 }
 
 func (m model) Init() tea.Cmd {
@@ -124,5 +130,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	s := fmt.Sprintf("Authorized!")
-	return s + "\n\n" + "Press 'q' to quit\n"
+	return m.txtStyle.Render(s) + "\n\n" + m.quitStyle.Render("Press 'q' to quit\n")
 }
