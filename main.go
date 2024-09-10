@@ -24,10 +24,27 @@ const (
 	dev           = true
 )
 
+// TODO: move to db
+var users = map[string]string{
+}
+
 func main() {
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
+
+		wish.WithPublicKeyAuth(func(_ ssh.Context, key ssh.PublicKey) bool {
+			log.Info("public-key")
+			for _, pubkey := range users {
+				parsed, _, _, _, _ := ssh.ParseAuthorizedKey(
+					[]byte(pubkey),
+				)
+				if ssh.KeysEqual(key, parsed) {
+					return true
+				}
+			}
+			return false
+		}),
 
 		wish.WithMiddleware(
 			logging.Middleware(),
