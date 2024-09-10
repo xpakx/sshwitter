@@ -8,11 +8,18 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"fmt"
 
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/logging"
+
+	tea "github.com/charmbracelet/bubbletea"
+	//"github.com/charmbracelet/lipgloss"
+
+	"github.com/charmbracelet/wish/activeterm"
+	"github.com/charmbracelet/wish/bubbletea"
 )
 
 
@@ -35,12 +42,9 @@ func main() {
 		wish.WithPublicKeyAuth(GetPublicKeyAuth),
 
 		wish.WithMiddleware(
+			bubbletea.Middleware(teaHandler),
+			activeterm.Middleware(),
 			logging.Middleware(),
-			func(next ssh.Handler) ssh.Handler {
-				return func(sess ssh.Session) {
-					wish.Println(sess, "Authorized!")
-				}
-			},
 		),
 	)
 
@@ -91,4 +95,34 @@ func GetPublicKeyAuth(_ ssh.Context, key ssh.PublicKey) bool {
 		}
 	}
 	return false
+}
+
+
+func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+	m := model{ name: "sshwitter" }
+	return m, []tea.ProgramOption{tea.WithAltScreen()}
+}
+
+type model struct {
+	name      string
+}
+
+func (m model) Init() tea.Cmd {
+	return nil
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+		}
+	}
+	return m, nil
+}
+
+func (m model) View() string {
+	s := fmt.Sprintf("Authorized!")
+	return s + "\n\n" + "Press 'q' to quit\n"
 }
