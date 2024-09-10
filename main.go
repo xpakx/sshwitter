@@ -21,22 +21,13 @@ const (
 	host          = "localhost"
 	port          = "23230"
 	validPassword = "password"
+	dev           = true
 )
 
 func main() {
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
-
-		// TODO: apply only for dev
-		wish.WithPasswordAuth(func(_ ssh.Context, password string) bool {
-			 if (password == validPassword) {
-				 log.Info("Successful authentication")
-			 } else {
-				 log.Info("Authentication failed")
-			 }
-			 return password == validPassword
-		 }),
 
 		wish.WithMiddleware(
 			logging.Middleware(),
@@ -47,6 +38,20 @@ func main() {
 			},
 		),
 	)
+
+
+	if (dev) {
+		s.SetOption(
+			wish.WithPasswordAuth(func(_ ssh.Context, password string) bool {
+				if (password == validPassword) {
+					log.Info("Successful authentication")
+				} else {
+					log.Info("Authentication failed")
+				}
+				return password == validPassword
+			}),
+		)
+	}
 
 
 	if err != nil {
