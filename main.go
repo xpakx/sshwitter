@@ -32,19 +32,7 @@ func main() {
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
-
-		wish.WithPublicKeyAuth(func(_ ssh.Context, key ssh.PublicKey) bool {
-			log.Info("public-key")
-			for _, pubkey := range users {
-				parsed, _, _, _, _ := ssh.ParseAuthorizedKey(
-					[]byte(pubkey),
-				)
-				if ssh.KeysEqual(key, parsed) {
-					return true
-				}
-			}
-			return false
-		}),
+		wish.WithPublicKeyAuth(GetPublicKeyAuth),
 
 		wish.WithMiddleware(
 			logging.Middleware(),
@@ -56,19 +44,7 @@ func main() {
 		),
 	)
 
-
-	if (dev) {
-		s.SetOption(
-			wish.WithPasswordAuth(func(_ ssh.Context, password string) bool {
-				if (password == validPassword) {
-					log.Info("Successful authentication")
-				} else {
-					log.Info("Authentication failed")
-				}
-				return password == validPassword
-			}),
-		)
-	}
+	if (dev) { s.SetOption(wish.WithPasswordAuth(GetPasswordAuth)) }
 
 
 	if err != nil {
@@ -92,4 +68,27 @@ func main() {
 	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
 		log.Error("Could not stop server", "error", err)
 	}
+}
+
+
+func GetPasswordAuth(_ ssh.Context, password string) bool {
+	if (password == validPassword) {
+		log.Info("Successful authentication")
+	} else {
+		log.Info("Authentication failed")
+	}
+	return password == validPassword
+}
+
+func GetPublicKeyAuth(_ ssh.Context, key ssh.PublicKey) bool {
+	log.Info("public-key")
+	for _, pubkey := range users {
+		parsed, _, _, _, _ := ssh.ParseAuthorizedKey(
+			[]byte(pubkey),
+		)
+		if ssh.KeysEqual(key, parsed) {
+			return true
+		}
+	}
+	return false
 }
