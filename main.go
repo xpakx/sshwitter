@@ -127,11 +127,14 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
 	renderer := bubbletea.MakeRenderer(s)
 
+	var model tea.Model
+
 	if (!guest && verified) {
-		return getBoardModel(renderer, username), []tea.ProgramOption{tea.WithAltScreen()}
+		model =  getBoardModel(renderer, username)
 	} else if (!guest && !verified) {
-		return getUnverifiedModel(renderer, username), []tea.ProgramOption{tea.WithAltScreen()}
+		model = getUnverifiedModel(renderer, username)
 	} else {
-		return getRegisterModel(renderer, username), []tea.ProgramOption{tea.WithAltScreen()}
+		model = getRegisterModel(renderer, username)
 	}
+	return model, []tea.ProgramOption{tea.WithAltScreen()}
 }
