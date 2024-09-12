@@ -16,7 +16,6 @@ import (
 	"github.com/charmbracelet/wish/logging"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
@@ -40,6 +39,10 @@ var users = map[string]SavedUser{
 	"test" : { 
 		key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDQ2EOmuzeJo6LN4jg7Vuvf0BSjrqDMSguc3Z6i0zkVURz5Bb61BZlG7PpyqOQ1aeISNfoMSpVwx1fQytIvQBfpF6OX+XMI/wzgOEvbPNeQ0RHsPJjq0x6wMLNEWpPl5f07pDgBlWB8IkBTKvSZQje/WsEwDvUnFRrWcC8PHs2H/WRpm+wagg9T5N6jDqlC711DJEWIyKwl744QHK4NBnyXHfK+0pW/JfhEelyQ+bTVfWNDu9V5uZI69hiKZNs4UANhAoUEhhZIy60ZHho6Zn8JkZkjORMwGi/hi8lUaIDYXXcqKGqKQdU2HU5NgpWVO3/w7KRQceegDiMO5Aa/yMEtdVi0B2NmUGVTZcCEwkqWbACqG5r23AmgrMX/Hh8L/9Z1nFwnxCY2bUd29DQI1q7GzTwYIxNi9y7/8H5+gmU6Yn3Wm5mUjpxWLF9QbU0fOFNZ/WO1h3rRYCwoouJ4ixWuCM6BLcBuuEutx24mjBaO3x0p68XJ8rxMuvS/n9TwTywPfeDS5Yft1hHovyRt1vSAHLxd8eSP65vJHJwsYAL8psGbm68CyYnzf8D4CPSJh4DSCQRzNnfFjYozX9QuXAhPtJkjPI7w6mJyPmjUaDB+sOkolIqIdF0jBXuaB/Hv/03H3ul5+SqpB0s37Wh0rwI2ORX0Ct45pYjj78WtAkukEQ==",
 		verified: true,
+	},
+	"test2" : {
+		key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC6pmS52talb/wDZx/4xBXCgNCKbrYcd9W3zUAPmTyEpeyl5O725W0L4zGgDQMHp5+16yKz+BVQVmD/Cl+DO7Oi1OJIyaRzZJaeLF7GPNea/8HG+NzG/MByOvVIShUPHI7xo3Kc9A2bVKyqm5IPxtgzZVjOnWWw3mT8AflaFRq0Fx6kipnceBZVHvi5AYuezmUZ0FYBzgqidx/hAkfCII2ubmiuSrVAG9w5k8ndtRMG/ibaUeFvBOQiS2kKbCAJNHG4fcKj5qwYapXk2HQGJoNZCLvuOr2BFZ4jqhNEnaneEL1t+8+/LQXRvchuOGsJLluONU3+t8mGLvyL/8HZ6aQrTZfO8H+fE4RrOJP+CQNhl9p5i3C6idc2kaA4Io1PKgvwQ/fOt3/vSwp6itTvqHPArPSssB1vG9lQy2QWe6/1cEqBsH56SlkVVe/kIg3Y16ZfCb02AkB/n2MgnfwyHpLVnmduEBzZRr5KQbEO2ULvOB2H/aU0qlZvZaoi7kVkqmw3Cmmcx/J6UeomCOS/hwG97ybVtrphxJy9Baca/PkDJBLy0Sv/OMt1CCpP0JGwHcpkm2gEBLWU7Gb7wTkHx/Op3mQy8wg7b1uyCWJA23taIHadK88am2BMI1t+EvoYxgSL/t1GMKa3qN4DOI6VCOJl1D+/7PBK1xBbNDSgeqfBbw==",
+		verified: false,
 	},
 }
 
@@ -123,52 +126,12 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	log.Info("New tea handler", "user", username, "guest", guest, "verified", verified)
 
 	renderer := bubbletea.MakeRenderer(s)
-	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
-	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
-	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
 
-	m := model{ 
-		name: "sshwitter", 
-		username: username,
-		txtStyle: txtStyle, 
-		quitStyle: quitStyle,
-		userStyle: usernameStyle,
-		guest: guest,
-		verified: verified,
+	if (!guest && verified) {
+		return getBoardModel(renderer, username), []tea.ProgramOption{tea.WithAltScreen()}
+	} else if (!guest && !verified) {
+		return getUnverifiedModel(renderer, username), []tea.ProgramOption{tea.WithAltScreen()}
+	} else {
+		return getRegisterModel(renderer, username), []tea.ProgramOption{tea.WithAltScreen()}
 	}
-	return m, []tea.ProgramOption{tea.WithAltScreen()}
-}
-
-type model struct {
-	name       string
-	username   string
-	txtStyle   lipgloss.Style
-	quitStyle  lipgloss.Style
-	userStyle  lipgloss.Style
-	guest      bool
-	verified   bool
-}
-
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
-			return m, tea.Quit
-		}
-	}
-	return m, nil
-}
-
-func (m model) View() string {
-	return m.txtStyle.Render("Authorized!") + 
-		"\n" + 
-		"Hello, " + 
-		m.userStyle.Render(m.username) +
-		"\n\n" + 
-		m.quitStyle.Render("Press 'q' to quit\n")
 }
