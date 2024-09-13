@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,9 +24,9 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string) (RegisterMod
 		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
 
 	pages := []tea.Model{
-		PageOneModel{ page: 1 },
-		PageOneModel{ page: 2 },
-		PageOneModel{ page: 3 },
+		getPageOneModel(3),
+		getPageOneModel(3),
+		getPageOneModel(3),
 	}
 	
 	return RegisterModel{ 
@@ -63,20 +62,36 @@ func (m RegisterModel) Init() tea.Cmd {
 
 func (m RegisterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	focused := m.CheckFocus()
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "h", "left": 
-		        m.currentView = max(m.currentView - 1, 0);
-		        return m, nil
+			if !focused {
+				m.currentView = max(m.currentView - 1, 0);
+				return m, nil
+			}
 		case "l", "right": 
-		        m.currentView = min(m.currentView + 1, len(m.pages)-1);
-		        return m, nil
+			if !focused {
+				m.currentView = min(m.currentView + 1, len(m.pages)-1);
+				return m, nil
+			}
 		}
 	}
+	m.pages[m.currentView], cmd = m.pages[m.currentView].Update(msg)
 	return m, cmd
+}
+
+func (m RegisterModel) CheckFocus() (bool) {
+	view := m.pages[m.currentView]
+	if v, ok := view.(RegisterOneModel); ok {
+		return v.input
+	} else {
+		return false
+	}
 }
 
 func (m RegisterModel) View() string {
@@ -98,20 +113,4 @@ func (m RegisterModel) View() string {
 	b.WriteString("\n\n")
 	b.WriteString(m.quitStyle.Render("h/l ←/→ page • q: quit\n"))
 	return b.String()
-}
-
-type PageOneModel struct {
-	page  int
-}
-
-func (m PageOneModel) Init() tea.Cmd {
-	return nil
-}
-
-func (m PageOneModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
-}
-
-func (m PageOneModel) View() string {
-	return fmt.Sprintf("Page %d", + m.page)
 }
