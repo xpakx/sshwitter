@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/mail"
-	"regexp"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -149,8 +149,8 @@ func dateValidator(s string) error {
 	if len(s) == 0 {
 		return fmt.Errorf("please enter birthday")
 	}
-	match, _ := regexp.MatchString("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", s)
-	if (!match) {
+	_, err := time.Parse("2006-01-02", s)
+	if err != nil {
 		return fmt.Errorf("format: yyyy-mm-dd")
 	}
 	return nil
