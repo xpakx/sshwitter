@@ -12,10 +12,10 @@ import (
 
 type RegisterOneModel struct {
 	page       int
-	steps       int
-	nameInput  textinput.Model
-	emailInput textinput.Model
-	birthInput textinput.Model
+	steps      int
+	nameInput  CustomInput
+	emailInput CustomInput
+	birthInput CustomInput
 	elems      int
 	current    int
 	err        error
@@ -23,24 +23,9 @@ type RegisterOneModel struct {
 }
 
 func getPageOneModel(steps int) RegisterOneModel {
-	nameInput := textinput.New()
-	nameInput.Placeholder = "Name"
-	nameInput.Focus()
-	nameInput.CharLimit = 40
-	nameInput.Width = 20
-	nameInput.Validate = nameValidator
-
-	emailInput := textinput.New()
-	emailInput.Placeholder = "Mail"
-	emailInput.CharLimit = 40
-	emailInput.Width = 20
-	emailInput.Validate = emailValidator
-
-	birthInput := textinput.New()
-	birthInput.Placeholder = "yyyy-mm-dd"
-	birthInput.CharLimit = 40
-	birthInput.Width = 20
-	birthInput.Validate = dateValidator
+	nameInput := createCustomInput("User name", "name", nameValidator, true)
+	emailInput := createCustomInput("E-mail", "mail", emailValidator, false)
+	birthInput := createCustomInput("Birth date", "yyyy-mm-dd", dateValidator, false)
 
 	return RegisterOneModel {
 		nameInput: nameInput,
@@ -122,17 +107,17 @@ func getInputPrefix(input textinput.Model, current bool) string {
 }
 
 func (m RegisterOneModel) View() string {
-	preName := getInputPrefix(m.nameInput, m.current == 0)
-	preEmail := getInputPrefix(m.emailInput, m.current == 1)
-	preBirth := getInputPrefix(m.birthInput, m.current == 2)
+	name := m.nameInput.View(m.current == 0)
+	email := m.emailInput.View(m.current == 1)
+	birth := m.birthInput.View(m.current == 2)
 	return "Create your account\n" +
 		fmt.Sprintf("Step %d of %d", m.page, m.steps) +
 		"\n\n" +
-		preName + m.nameInput.View() +
+		name +
 		"\n" +
-		preEmail + m.emailInput.View() +
+		email +
 		"\n" +
-		preBirth + m.birthInput.View()
+		birth
 
 }
 
@@ -156,4 +141,68 @@ func dateValidator(s string) error {
 		return fmt.Errorf("Date should have format yyyy-mm-dd")
 	}
 	return nil
+}
+
+
+
+
+type CustomInput struct {
+	Name       string
+	Input      textinput.Model
+}
+
+func createCustomInput(name string, placeholder string, validator textinput.ValidateFunc, autofocus bool) CustomInput {
+	input := textinput.New()
+	input.Placeholder = placeholder
+
+	input.CharLimit = 40
+	input.Width = 25
+	input.Validate = validator
+
+	if autofocus {
+		input.Focus()
+	}
+
+	return CustomInput{
+		Name: name,
+		Input: input,
+	}
+}
+
+func (i CustomInput) Valid() bool {
+	return i.Input.Err == nil
+}
+
+func (i CustomInput) Invalid() bool {
+	return i.Input.Err != nil
+}
+
+func (i *CustomInput) Blur() {
+	i.Input.Blur()
+}
+
+func (i CustomInput) getPrefix(current bool) string {
+	if current {
+		if (i.Invalid()) {
+			return "⨯ "
+		} else {
+			return "o "
+		}
+	}
+	return "  "
+}
+
+func (i CustomInput) View(current bool) string {
+	return i.getPrefix(current) +
+	       i.Input.View()
+}
+
+func (i CustomInput) Update(msg tea.Msg) (CustomInput, tea.Cmd) {
+	var cmd tea.Cmd
+	i.Input, cmd = i.Input.Update(msg)
+	return i, cmd
+}
+
+func (i *CustomInput) Focus() tea.Cmd {
+	return i.Input.Focus()
 }
