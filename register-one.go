@@ -154,6 +154,7 @@ type CustomInput struct {
 func createCustomInput(name string, placeholder string, validator textinput.ValidateFunc, autofocus bool) CustomInput {
 	input := textinput.New()
 	input.Placeholder = placeholder
+	input.Prompt  = ""
 
 	input.CharLimit = 40
 	input.Width = 25
@@ -184,10 +185,21 @@ func (i *CustomInput) Blur() {
 func (i CustomInput) getPrefix(current bool) string {
 	if current {
 		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#fad02c")).
+			Foreground(lipgloss.Color("#1da1f2")).
 			Render("⍟ ")
 	}
 	return "  "
+}
+
+
+func (i CustomInput) getBorderColor(current bool) lipgloss.Color {
+	if current && i.Input.Focused() {
+		return lipgloss.Color("#1da1f2")
+	}
+	if i.Invalid() {
+		return lipgloss.Color("#cc0033")
+	}
+	return lipgloss.Color("8")
 }
 
 func (i CustomInput) getValidationPrefix() string {
@@ -210,12 +222,16 @@ func (i CustomInput) View(current bool) string {
 		Bold(true)
 
 	inputStyle := lipgloss.NewStyle().
+	        Border(lipgloss.RoundedBorder()).
 		MarginBottom(1)
 
 	output := lipgloss.JoinVertical(
 		lipgloss.Top,
 		nameStyle.Render(i.Name),
-		i.getValidationPrefix() + inputStyle.Render(i.Input.View()),
+		lipgloss.JoinHorizontal(lipgloss.Left,
+			"\n" + i.getValidationPrefix() + "\n",
+			inputStyle.BorderForeground(i.getBorderColor(current)).Render(i.Input.View()),
+		),
 	)
 	return i.getPrefix(current) + output
 }
