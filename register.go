@@ -24,9 +24,9 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string) (RegisterMod
 		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
 
 	pages := []tea.Model{
-		getPageOneModel(3),
-		getPageOneModel(3),
-		getPageOneModel(3),
+		getPageOneModel(3, username),
+		getPageOneModel(3, ""),
+		getPageOneModel(3, ""),
 	}
 	
 	return RegisterModel{ 
@@ -75,7 +75,7 @@ func (m RegisterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case "l", "right": 
-			if !focused {
+			if !focused && m.CheckValidity() {
 				m.currentView = min(m.currentView + 1, len(m.pages)-1);
 				return m, nil
 			}
@@ -89,6 +89,15 @@ func (m RegisterModel) CheckFocus() (bool) {
 	view := m.pages[m.currentView]
 	if v, ok := view.(RegisterOneModel); ok {
 		return v.input
+	} else {
+		return false
+	}
+}
+
+func (m RegisterModel) CheckValidity() (bool) {
+	view := m.pages[m.currentView]
+	if v, ok := view.(RegisterOneModel); ok {
+		return v.Valid()
 	} else {
 		return false
 	}

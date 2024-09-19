@@ -122,6 +122,15 @@ func (m RegisterOneModel) View() string {
 
 }
 
+func (m RegisterOneModel) Valid() bool {
+	return m.nameInput.Valid() &&
+		m.emailInput.Valid() &&
+		m.birthInput.Valid() &&
+		len(m.nameInput.Input.Value()) > 0 &&
+		len(m.emailInput.Input.Value()) > 0 &&
+		len(m.birthInput.Input.Value()) > 0
+}
+
 func nameValidator(s string) error {
 	if len(s) == 0 {
 		return fmt.Errorf("what's your name?")
