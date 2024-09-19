@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/mail"
 	"regexp"
-	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/bubbles/textinput"
 )
 
 type RegisterOneModel struct {
@@ -122,23 +122,36 @@ func (m RegisterOneModel) View() string {
 }
 
 func nameValidator(s string) error {
-	if (len(s) > 20 || len(s) < 5) {
-		return fmt.Errorf("Name should be between 5 and 20 characters")
+	if len(s) == 0 {
+		return fmt.Errorf("what's your name?")
+	}
+	if (len(s) < 5) {
+		return fmt.Errorf("at least 5 characters")
+	}
+	if (len(s) > 20) {
+		return fmt.Errorf("at most 20 characters")
 	}
 	return nil
 }
 
 func emailValidator(s string) error {
-	if (!strings.Contains(s, "@")) {
-		return fmt.Errorf("Should be correct email")
+	if len(s) == 0 {
+		return fmt.Errorf("please enter email")
+	}
+	_, err := mail.ParseAddress(s)
+	if (err != nil) {
+		return fmt.Errorf("should be correct email")
 	}
 	return nil
 }
 
 func dateValidator(s string) error {
+	if len(s) == 0 {
+		return fmt.Errorf("please enter birthday")
+	}
 	match, _ := regexp.MatchString("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", s)
 	if (!match) {
-		return fmt.Errorf("Date should have format yyyy-mm-dd")
+		return fmt.Errorf("format: yyyy-mm-dd")
 	}
 	return nil
 }
