@@ -108,7 +108,7 @@ func (m RegisterModel) View() string {
 	
 	b.WriteString("\n")
 	b.WriteString(
-		m.pageStyle.Width(20).Render(m.pages[m.currentView].View()),
+		m.pageStyle.Width(35).Render(m.pages[m.currentView].View()),
 	)
 	b.WriteString("\n\n")
 	b.WriteString(m.quitStyle.Render("h/l ←/→ page • q: quit\n"))

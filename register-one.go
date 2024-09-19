@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	//"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
@@ -183,18 +183,41 @@ func (i *CustomInput) Blur() {
 
 func (i CustomInput) getPrefix(current bool) string {
 	if current {
-		if (i.Invalid()) {
-			return "⨯ "
-		} else {
-			return "o "
-		}
+		return lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#fad02c")).
+			Render("⍟ ")
 	}
 	return "  "
 }
 
+func (i CustomInput) getValidationPrefix() string {
+		if (i.Invalid()) {
+			return lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#cc0033")).
+				Render("⨯ ")
+		} else if (i.Valid() && len(i.Input.Value()) > 0) {
+			return lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#34b233")).
+				Render("✔ ")
+		} else {
+			return "  "
+		}
+}
+
 func (i CustomInput) View(current bool) string {
-	return i.getPrefix(current) +
-	       i.Input.View()
+	nameStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("5")).
+		Bold(true)
+
+	inputStyle := lipgloss.NewStyle().
+		MarginBottom(1)
+
+	output := lipgloss.JoinVertical(
+		lipgloss.Top,
+		nameStyle.Render(i.Name),
+		i.getValidationPrefix() + inputStyle.Render(i.Input.View()),
+	)
+	return i.getPrefix(current) + output
 }
 
 func (i CustomInput) Update(msg tea.Msg) (CustomInput, tea.Cmd) {
