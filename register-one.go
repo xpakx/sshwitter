@@ -22,8 +22,9 @@ type RegisterOneModel struct {
 	input      bool
 }
 
-func getPageOneModel(steps int) RegisterOneModel {
+func getPageOneModel(steps int, username string) RegisterOneModel {
 	nameInput := createCustomInput("User name", "name", nameValidator, true)
+	nameInput.Input.SetValue(username)
 	emailInput := createCustomInput("E-mail", "mail", emailValidator, false)
 	birthInput := createCustomInput("Birth date", "yyyy-mm-dd", dateValidator, false)
 
