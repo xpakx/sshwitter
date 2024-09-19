@@ -222,8 +222,18 @@ func (i CustomInput) View(current bool) string {
 		Bold(true)
 
 	inputStyle := lipgloss.NewStyle().
-	        Border(lipgloss.RoundedBorder()).
-		MarginBottom(1)
+	        Border(lipgloss.RoundedBorder())
+
+
+	error := "";
+	if(i.Invalid()) {
+		error = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#cc0033")).
+			PaddingLeft(2).
+			MaxHeight(1).
+			MaxWidth(25).
+			Render(i.Input.Err.Error())
+	}
 
 	output := lipgloss.JoinVertical(
 		lipgloss.Top,
@@ -232,6 +242,7 @@ func (i CustomInput) View(current bool) string {
 			"\n" + i.getValidationPrefix() + "\n",
 			inputStyle.BorderForeground(i.getBorderColor(current)).Render(i.Input.View()),
 		),
+		error,
 	)
 	return i.getPrefix(current) + output
 }
