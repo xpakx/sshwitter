@@ -98,6 +98,8 @@ func (m RegisterModel) CheckValidity() (bool) {
 	view := m.pages[m.currentView]
 	if v, ok := view.(RegisterOneModel); ok {
 		return v.Valid()
+	} else if v, ok := view.(RegisterTwoModel); ok {
+		return v.Valid()
 	} else {
 		return false
 	}

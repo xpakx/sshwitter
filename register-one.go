@@ -11,15 +11,17 @@ import (
 )
 
 type RegisterOneModel struct {
-	page       int
-	steps      int
-	nameInput  CustomInput
-	emailInput CustomInput
-	birthInput CustomInput
-	elems      int
-	current    int
-	err        error
-	input      bool
+	page             int
+	steps            int
+	nameInput        CustomInput
+	emailInput       CustomInput
+	birthInput       CustomInput
+	elems            int
+	current          int
+	err              error
+	input            bool
+	headerStyle      lipgloss.Style
+	subheaderStyle   lipgloss.Style
 }
 
 func getPageOneModel(steps int, username string) RegisterOneModel {
@@ -27,6 +29,10 @@ func getPageOneModel(steps int, username string) RegisterOneModel {
 	nameInput.Input.SetValue(username)
 	emailInput := createCustomInput("E-mail", "mail", emailValidator, false)
 	birthInput := createCustomInput("Birth date", "yyyy-mm-dd", dateValidator, false)
+
+
+	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
+	subheaderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 
 	return RegisterOneModel {
 		nameInput: nameInput,
@@ -37,6 +43,8 @@ func getPageOneModel(steps int, username string) RegisterOneModel {
 		elems: 3,
 		err:       nil,
 		input: true,
+		headerStyle: headerStyle,
+		subheaderStyle: subheaderStyle,
 	}
 }
 
@@ -111,15 +119,15 @@ func (m RegisterOneModel) View() string {
 	name := m.nameInput.View(m.current == 0)
 	email := m.emailInput.View(m.current == 1)
 	birth := m.birthInput.View(m.current == 2)
-	return "Create your account\n" +
-		fmt.Sprintf("Step %d of %d", m.page, m.steps) +
+
+	return m.headerStyle.Render("Create your account") + "\n" +
+		m.subheaderStyle.Render(fmt.Sprintf("Step %d of %d", m.page, m.steps)) +
 		"\n\n" +
 		name +
 		"\n" +
 		email +
 		"\n" +
 		birth
-
 }
 
 func (m RegisterOneModel) Valid() bool {
