@@ -25,7 +25,7 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string) (RegisterMod
 
 	pages := []tea.Model{
 		getPageOneModel(3, username),
-		getPageOneModel(3, ""),
+		getPageTwoModel(3),
 		getPageOneModel(3, ""),
 	}
 	
