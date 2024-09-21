@@ -40,7 +40,7 @@ func getPageOneModel(steps int, username string) RegisterOneModel {
 		birthInput: birthInput,
 		page: 1,
 		steps: steps,
-		elems: 3,
+		elems: 4,
 		err:       nil,
 		input: true,
 		headerStyle: headerStyle,
@@ -76,16 +76,21 @@ func (m RegisterOneModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter": 
 		        if(!m.input) {
-				m.input = true
 				if (m.current == 0) {
+					m.input = true
 					return m, m.nameInput.Focus()
 				} else if (m.current == 1) {
+					m.input = true
 					m.emailInput.Focus()
 					return m, m.emailInput.Focus()
 				} else if (m.current == 2) {
+					m.input = true
 					m.birthInput.Focus()
 					return m, m.birthInput.Focus()
+				} else if (m.current == 3) {
+					return m, nextPage
 				}
+
 			} else {
 				m.nameInput.Blur()
 				m.emailInput.Blur()
@@ -120,6 +125,21 @@ func (m RegisterOneModel) View() string {
 	email := m.emailInput.View(m.current == 1)
 	birth := m.birthInput.View(m.current == 2)
 
+	buttonStyle := lipgloss.NewStyle().
+		MarginTop(2).
+		Width(30).
+		Align(lipgloss.Right)
+	var button string;
+	
+	if (m.current == 3)  {
+		button = buttonStyle.
+			Render(getButtonPrefix(m.current == 3) + "[ Next ]")
+	} else {
+		button = buttonStyle.
+			Foreground(lipgloss.Color("8")).
+			Render("[ Next ]")
+	}
+
 	return m.headerStyle.Render("Create your account") + "\n" +
 		m.subheaderStyle.Render(fmt.Sprintf("Step %d of %d", m.page, m.steps)) +
 		"\n\n" +
@@ -127,7 +147,8 @@ func (m RegisterOneModel) View() string {
 		"\n" +
 		email +
 		"\n" +
-		birth
+		birth +
+		button
 }
 
 func (m RegisterOneModel) Valid() bool {
