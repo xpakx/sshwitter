@@ -39,6 +39,12 @@ func (m RegisterTwoModel) Init() tea.Cmd {
 	return nil
 }
 
+type NextPageMsg struct {}
+
+func nextPage() tea.Msg {
+	return NextPageMsg{}
+}
+
 func (m RegisterTwoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd 
 
@@ -57,6 +63,8 @@ func (m RegisterTwoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		        if(m.current == 1) {
 				m.accepted = !m.accepted
 				return m, nil
+			} else if(m.current == 2) {
+				return m, nextPage
 			}
 		}
 	case error:

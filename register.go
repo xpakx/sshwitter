@@ -80,6 +80,11 @@ func (m RegisterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		}
+	case NextPageMsg:
+		if !focused && m.CheckValidity() {
+			m.currentView = min(m.currentView + 1, len(m.pages)-1);
+			return m, nil
+		}
 	}
 	m.pages[m.currentView], cmd = m.pages[m.currentView].Update(msg)
 	return m, cmd
