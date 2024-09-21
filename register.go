@@ -26,7 +26,7 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string) (RegisterMod
 	pages := []tea.Model{
 		getPageOneModel(3, username),
 		getPageTwoModel(3),
-		getPageOneModel(3, ""),
+		getPageThreeModel(3),
 	}
 	
 	return RegisterModel{ 
@@ -76,12 +76,18 @@ func (m RegisterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "l", "right": 
 			if !focused && m.CheckValidity() {
+				if m.currentView == 0 {
+					m.UpdatePageThree()
+				}
 				m.currentView = min(m.currentView + 1, len(m.pages)-1);
 				return m, nil
 			}
 		}
 	case NextPageMsg:
 		if !focused && m.CheckValidity() {
+			if m.currentView == 0 {
+				m.UpdatePageThree()
+			}
 			m.currentView = min(m.currentView + 1, len(m.pages)-1);
 			return m, nil
 		}
@@ -97,6 +103,18 @@ func (m RegisterModel) CheckFocus() (bool) {
 	} else {
 		return false
 	}
+}
+
+func (m RegisterModel) UpdatePageThree()  {
+	if three, ok := m.pages[2].(RegisterThreeModel); ok {
+		if one, ok := m.pages[0].(RegisterOneModel); ok {
+			three.username = one.nameInput.Input.Value()
+			three.email = one.emailInput.Input.Value()
+			three.birth = one.birthInput.Input.Value()
+			m.pages[2] = three
+		}
+	}
+	
 }
 
 func (m RegisterModel) CheckValidity() (bool) {
