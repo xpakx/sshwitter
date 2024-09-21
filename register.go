@@ -5,9 +5,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
-func getRegisterModel(renderer *lipgloss.Renderer, username string) (RegisterModel) {
+func getRegisterModel(renderer *lipgloss.Renderer, username string, publicKey string) (RegisterModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
@@ -40,12 +41,14 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string) (RegisterMod
 		inactiveDot: inactiveDot,
 		currentView: 0,
 		pages: pages,
+		publicKey: publicKey,
 	}
 }
 
 type RegisterModel struct {
 	name         string
 	username     string
+	publicKey    string
 	txtStyle     lipgloss.Style
 	quitStyle    lipgloss.Style
 	userStyle    lipgloss.Style
@@ -91,6 +94,8 @@ func (m RegisterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentView = min(m.currentView + 1, len(m.pages)-1);
 			return m, nil
 		}
+	case AcceptMsg:
+		m.Register()
 	}
 	m.pages[m.currentView], cmd = m.pages[m.currentView].Update(msg)
 	return m, cmd
@@ -102,6 +107,29 @@ func (m RegisterModel) CheckFocus() (bool) {
 		return v.input
 	} else {
 		return false
+	}
+}
+
+func (m RegisterModel) Register() {
+	log.Info("Trying to register")
+	view := m.pages[0]
+	var username string
+	if v, ok := view.(RegisterOneModel); ok {
+		username = v.nameInput.Input.Value()
+	} else {
+		return 
+	}
+
+	_, exists := users[username]
+	if !exists { // TODO: error; also, it's not thread safe, but map is only a temporary solution anyways
+		val := SavedUser {
+			key: m.publicKey,
+			verified: false,
+		}
+		users[username] = val
+		log.Info("Saved new user")
+	} else {
+		log.Error("User already exists")
 	}
 }
 

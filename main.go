@@ -19,6 +19,8 @@ import (
 
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
+
+	gossh "golang.org/x/crypto/ssh"
 )
 
 // TODO: move to yaml/env
@@ -94,13 +96,24 @@ func GetPasswordAuth(context ssh.Context, password string) bool {
 	}
 	context.SetValue("guest", true);
 	context.SetValue("verified", false);
+	context.SetValue("publicKey", "");
 	return password == validPassword
+}
+
+func ConvertKey(k ssh.PublicKey) string {
+	return strings.TrimSpace(string(gossh.MarshalAuthorizedKey(k)[:]))
 }
 
 func GetPublicKeyAuth(context ssh.Context, key ssh.PublicKey) bool {
 	username := strings.Split(context.User(), ":")[0];
 	log.Infof("New connection with username: %s", username)
 	log.Info("Trying public key")
+
+	for key, element := range users {
+		log.Info(key, element.key, element.verified)
+	}
+
+
 	if savedUser, found :=  users[username]; found {
 		parsed, _, _, _, _ := ssh.ParseAuthorizedKey(
 			[]byte(savedUser.key),
@@ -109,11 +122,13 @@ func GetPublicKeyAuth(context ssh.Context, key ssh.PublicKey) bool {
 		if ssh.KeysEqual(key, parsed) {
 			context.SetValue("guest", false);
 			context.SetValue("verified", savedUser.verified);
+			context.SetValue("publicKey", ConvertKey(key));
 			return true
 		}
 	} 
 	log.Info("Public key not found")
 	context.SetValue("guest", true);
+	context.SetValue("publicKey", ConvertKey(key));
 	context.SetValue("verified", false);
 	return false
 }
@@ -123,6 +138,7 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	username := strings.Split(s.Context().User(), ":")[0];
 	guest := s.Context().Value("guest").(bool)
 	verified := s.Context().Value("verified").(bool)
+	publicKey := s.Context().Value("publicKey").(string)
 	log.Info("New tea handler", "user", username, "guest", guest, "verified", verified)
 
 	renderer := bubbletea.MakeRenderer(s)
@@ -134,7 +150,7 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	} else if (!guest && !verified) {
 		model = getUnverifiedModel(renderer, username)
 	} else {
-		model = getRegisterModel(renderer, username)
+		model = getRegisterModel(renderer, username, publicKey)
 	}
 	return model, []tea.ProgramOption{tea.WithAltScreen()}
 }
