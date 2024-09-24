@@ -121,21 +121,8 @@ func (m RegisterModel) Register() {
 	} else {
 		return 
 	}
+	SaveUser(m.publicKey, username, email)
 
-	_, exists := users[username]
-	if !exists { // TODO: error; also, it's not thread safe, but map is only a temporary solution anyways
-		val := SavedUser {
-			key: m.publicKey,
-			verified: false,
-			administrator: false,
-			username: username,
-			email: email,
-		}
-		users[username] = val
-		log.Info("Saved new user")
-	} else {
-		log.Error("User already exists")
-	}
 }
 
 func (m RegisterModel) UpdatePageThree()  {

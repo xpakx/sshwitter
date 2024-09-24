@@ -36,15 +36,6 @@ func GetUnverifiedUsers() []SavedUser {
 	return result
 }
 
-func AcceptUser(user SavedUser) {
-	user.verified = true;
-	users[user.username] = user
-}
-
-func DeleteUser(user SavedUser) {
-	delete(users, user.username)
-}
-
 type ModeratorTabModel struct {
 	txtStyle     lipgloss.Style
 	quitStyle    lipgloss.Style
