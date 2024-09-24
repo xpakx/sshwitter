@@ -34,6 +34,15 @@ func GetUnverifiedUsers() []SavedUser {
 	return result
 }
 
+func AcceptUser(user SavedUser) {
+	user.verified = true;
+	users[user.username] = user
+}
+
+func DeleteUser(user SavedUser) {
+	delete(users, user.username)
+}
+
 type ModeratorTabModel struct {
 	txtStyle     lipgloss.Style
 	quitStyle    lipgloss.Style
@@ -45,6 +54,12 @@ type ModeratorTabModel struct {
 
 func (m ModeratorTabModel) Init() tea.Cmd {
 	return nil
+}
+
+
+func (m *ModeratorTabModel) RemoveCurrentFromList() {
+	m.users = append(m.users[:m.current], m.users[m.current+1:]...)
+	m.current = max(m.current - 1, 0);
 }
 
 func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -59,6 +74,16 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "k", "up": 
 			m.current = max(m.current - 1, 0);
 			return m, nil
+		case "enter":
+			if len(m.users) > 0 {
+				AcceptUser(m.users[m.current])
+				m.RemoveCurrentFromList()
+			}
+		case "delete":
+			if len(m.users) > 0 {
+				DeleteUser(m.users[m.current])
+				m.RemoveCurrentFromList()
+			}
 		}
 	}
 	return m, nil
@@ -86,11 +111,10 @@ func (m ModeratorTabModel) View() string {
 	return doc.String()
 }
 
-
-
 func (m ModeratorTabModel) getPrefix(i int) string {
 	if m.current == i {
 		return m.prefixStyle.Render("⍟ ")
 	}
 	return "  "
 }
+

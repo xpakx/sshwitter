@@ -48,16 +48,22 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
-	m.tabs[m.currentTab], cmd = m.tabs[m.currentTab].Update(msg)
+	if len(m.tabs) > 0 {
+		m.tabs[m.currentTab], cmd = m.tabs[m.currentTab].Update(msg)
+	}
 	return m, cmd
 }
 
 func (m BoardModel) View() string {
+	var tabs string
+	if len(m.tabs) > 0 {
+		tabs = m.tabs[m.currentTab].View()
+	}
 	return m.txtStyle.Render("Authorized!") + 
 		"\n" + 
 		"Hello, " + 
 		m.userStyle.Render(m.user.username) +
 		"\n\n" + 
-		m.tabs[m.currentTab].View() + "\n" +
+		tabs + "\n" +
 		m.quitStyle.Render("Press 'q' to quit\n")
 }
