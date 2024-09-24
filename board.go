@@ -4,26 +4,35 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func getBoardModel(renderer *lipgloss.Renderer, username string) (BoardModel) {
+func getBoardModel(renderer *lipgloss.Renderer, user SavedUser) (BoardModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
 
+	tabs := []tea.Model{ }
+	if (user.administrator) {
+		tabs = append(tabs, getModeratorTab(renderer))
+	}
+
 	return BoardModel{ 
 		name: "sshwitter", 
-		username: username,
+		user: user,
 		txtStyle: txtStyle, 
 		quitStyle: quitStyle,
 		userStyle: usernameStyle,
+		currentTab: 0,
+		tabs: tabs,
 	}
 }
 
 type BoardModel struct {
 	name       string
-	username   string
+	user       SavedUser
 	txtStyle   lipgloss.Style
 	quitStyle  lipgloss.Style
 	userStyle  lipgloss.Style
+	currentTab int
+	tabs       []tea.Model
 }
 
 func (m BoardModel) Init() tea.Cmd {
@@ -45,7 +54,8 @@ func (m BoardModel) View() string {
 	return m.txtStyle.Render("Authorized!") + 
 		"\n" + 
 		"Hello, " + 
-		m.userStyle.Render(m.username) +
+		m.userStyle.Render(m.user.username) +
 		"\n\n" + 
+		m.tabs[m.currentTab].View() + "\n" +
 		m.quitStyle.Render("Press 'q' to quit\n")
 }

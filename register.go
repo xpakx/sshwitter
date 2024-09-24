@@ -114,8 +114,10 @@ func (m RegisterModel) Register() {
 	log.Info("Trying to register")
 	view := m.pages[0]
 	var username string
+	var email string
 	if v, ok := view.(RegisterOneModel); ok {
 		username = v.nameInput.Input.Value()
+		email = v.emailInput.Input.Value()
 	} else {
 		return 
 	}
@@ -125,6 +127,9 @@ func (m RegisterModel) Register() {
 		val := SavedUser {
 			key: m.publicKey,
 			verified: false,
+			administrator: false,
+			username: username,
+			email: email,
 		}
 		users[username] = val
 		log.Info("Saved new user")
