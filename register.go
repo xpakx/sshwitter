@@ -19,15 +19,15 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string, publicKey st
 		Padding(1, 2)
 
 
-	activeDot := lipgloss.NewStyle().
+	activeDot := renderer.NewStyle().
 		Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
-	inactiveDot := lipgloss.NewStyle().
+	inactiveDot := renderer.NewStyle().
 		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
 
 	pages := []tea.Model{
-		getPageOneModel(3, username),
-		getPageTwoModel(3),
-		getPageThreeModel(3),
+		getPageOneModel(renderer, 3, username),
+		getPageTwoModel(renderer, 3),
+		getPageThreeModel(renderer, 3),
 	}
 	
 	return RegisterModel{ 

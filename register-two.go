@@ -19,9 +19,9 @@ type RegisterTwoModel struct {
 	subheaderStyle   lipgloss.Style
 }
 
-func getPageTwoModel(steps int) RegisterTwoModel {
-	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	subheaderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+func getPageTwoModel(renderer *lipgloss.Renderer, steps int) RegisterTwoModel {
+	headerStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	subheaderStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	return RegisterTwoModel {
 		page: 2,
 		steps: steps,

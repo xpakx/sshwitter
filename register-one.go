@@ -22,17 +22,24 @@ type RegisterOneModel struct {
 	input            bool
 	headerStyle      lipgloss.Style
 	subheaderStyle   lipgloss.Style
+	buttonStyle      lipgloss.Style
+	
 }
 
-func getPageOneModel(steps int, username string) RegisterOneModel {
-	nameInput := createCustomInput("User name", "name", nameValidator, true)
+func getPageOneModel(renderer *lipgloss.Renderer, steps int, username string) RegisterOneModel {
+	nameInput := createCustomInput(renderer, "User name", "name", nameValidator, true)
 	nameInput.Input.SetValue(username)
-	emailInput := createCustomInput("E-mail", "mail", emailValidator, false)
-	birthInput := createCustomInput("Birth date", "yyyy-mm-dd", dateValidator, false)
+	emailInput := createCustomInput(renderer, "E-mail", "mail", emailValidator, false)
+	birthInput := createCustomInput(renderer, "Birth date", "yyyy-mm-dd", dateValidator, false)
 
 
-	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	subheaderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+	headerStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	subheaderStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
+
+	buttonStyle := lipgloss.NewStyle().
+		MarginTop(2).
+		Width(30).
+		Align(lipgloss.Right)
 
 	return RegisterOneModel {
 		nameInput: nameInput,
@@ -45,6 +52,7 @@ func getPageOneModel(steps int, username string) RegisterOneModel {
 		input: true,
 		headerStyle: headerStyle,
 		subheaderStyle: subheaderStyle,
+		buttonStyle: buttonStyle,
 	}
 }
 
@@ -125,17 +133,13 @@ func (m RegisterOneModel) View() string {
 	email := m.emailInput.View(m.current == 1)
 	birth := m.birthInput.View(m.current == 2)
 
-	buttonStyle := lipgloss.NewStyle().
-		MarginTop(2).
-		Width(30).
-		Align(lipgloss.Right)
 	var button string;
 	
 	if (m.current == 3)  {
-		button = buttonStyle.
+		button = m.buttonStyle.
 			Render(getButtonPrefix(m.current == 3) + "[ Next ]")
 	} else {
-		button = buttonStyle.
+		button = m.buttonStyle.
 			Foreground(lipgloss.Color("8")).
 			Render("[ Next ]")
 	}
@@ -199,11 +203,17 @@ func dateValidator(s string) error {
 
 
 type CustomInput struct {
-	Name       string
-	Input      textinput.Model
+	Name             string
+	Input            textinput.Model
+	prefixStyle      lipgloss.Style
+	errorMarkStyle   lipgloss.Style
+	checkmarkStyle   lipgloss.Style
+	inputStyle       lipgloss.Style
+	nameStyle        lipgloss.Style
+	errorStyle       lipgloss.Style
 }
 
-func createCustomInput(name string, placeholder string, validator textinput.ValidateFunc, autofocus bool) CustomInput {
+func createCustomInput(renderer *lipgloss.Renderer, name string, placeholder string, validator textinput.ValidateFunc, autofocus bool) CustomInput {
 	input := textinput.New()
 	input.Placeholder = placeholder
 	input.Prompt  = ""
@@ -212,6 +222,24 @@ func createCustomInput(name string, placeholder string, validator textinput.Vali
 	input.Width = 25
 	input.Validate = validator
 
+	prefixStyle := renderer.NewStyle().
+			Foreground(lipgloss.Color("#1da1f2"))
+	errorMarkStyle := renderer.NewStyle().
+			Foreground(lipgloss.Color("#cc0000"))
+	checkmarkStyle := renderer.NewStyle().
+			Foreground(lipgloss.Color("#34b233"))
+	nameStyle := renderer.NewStyle().
+			Foreground(lipgloss.Color("5")).
+			Bold(true)
+	errorStyle :=  renderer.NewStyle().
+			Foreground(lipgloss.Color("#cc0000")).
+			PaddingLeft(2).
+			MaxHeight(1).
+			MaxWidth(25)
+
+	inputStyle := renderer.NewStyle().
+			Border(lipgloss.RoundedBorder())
+
 	if autofocus {
 		input.Focus()
 	}
@@ -219,6 +247,12 @@ func createCustomInput(name string, placeholder string, validator textinput.Vali
 	return CustomInput{
 		Name: name,
 		Input: input,
+		prefixStyle: prefixStyle,
+		errorMarkStyle: errorMarkStyle,
+		checkmarkStyle: checkmarkStyle,
+		nameStyle: nameStyle,
+		inputStyle: inputStyle,
+		errorStyle: errorStyle,
 	}
 }
 
@@ -236,9 +270,7 @@ func (i *CustomInput) Blur() {
 
 func (i CustomInput) getPrefix(current bool) string {
 	if current {
-		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#1da1f2")).
-			Render("⍟ ")
+		return i.prefixStyle.Render("⍟ ")
 	}
 	return "  "
 }
@@ -256,43 +288,26 @@ func (i CustomInput) getBorderColor(current bool) lipgloss.Color {
 
 func (i CustomInput) getValidationPrefix() string {
 		if (i.Invalid()) {
-			return lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#cc0033")).
-				Render("⨯ ")
+			return i.errorMarkStyle.Render("⨯ ")
 		} else if (i.Valid() && len(i.Input.Value()) > 0) {
-			return lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#34b233")).
-				Render("✔ ")
+			return i.checkmarkStyle.Render("✔ ")
 		} else {
 			return "  "
 		}
 }
 
 func (i CustomInput) View(current bool) string {
-	nameStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("5")).
-		Bold(true)
-
-	inputStyle := lipgloss.NewStyle().
-	        Border(lipgloss.RoundedBorder())
-
-
 	error := "";
 	if(i.Invalid()) {
-		error = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#cc0033")).
-			PaddingLeft(2).
-			MaxHeight(1).
-			MaxWidth(25).
-			Render(i.Input.Err.Error())
+		error = i.errorStyle.Render(i.Input.Err.Error())
 	}
 
 	output := lipgloss.JoinVertical(
 		lipgloss.Top,
-		nameStyle.Render(i.Name),
+		i.nameStyle.Render(i.Name),
 		lipgloss.JoinHorizontal(lipgloss.Left,
 			"\n" + i.getValidationPrefix() + "\n",
-			inputStyle.BorderForeground(i.getBorderColor(current)).Render(i.Input.View()),
+			i.inputStyle.BorderForeground(i.getBorderColor(current)).Render(i.Input.View()),
 		),
 		error,
 	)

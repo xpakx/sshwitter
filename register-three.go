@@ -19,9 +19,9 @@ type RegisterThreeModel struct {
 	birth            string
 }
 
-func getPageThreeModel(steps int) RegisterThreeModel {
-	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	subheaderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+func getPageThreeModel(renderer *lipgloss.Renderer, steps int) RegisterThreeModel {
+	headerStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	subheaderStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	return RegisterThreeModel {
 		page: 3,
 		steps: steps,
