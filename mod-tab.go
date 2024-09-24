@@ -1,13 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func getModeratorTab(renderer *lipgloss.Renderer) (ModeratorTabModel) {
+func getModeratorTab(renderer *lipgloss.Renderer, db *sql.DB) (ModeratorTabModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	unverifiedUsers :=  GetUnverifiedUsers()
@@ -21,6 +22,7 @@ func getModeratorTab(renderer *lipgloss.Renderer) (ModeratorTabModel) {
 		viewName: "Waiting for verification",
 		users: unverifiedUsers,
 		current: 0,
+		db: db,
 	}
 }
 
@@ -50,6 +52,7 @@ type ModeratorTabModel struct {
 	viewName     string
 	users        []SavedUser
 	current      int
+	db           *sql.DB
 }
 
 func (m ModeratorTabModel) Init() tea.Cmd {

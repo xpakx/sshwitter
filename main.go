@@ -81,10 +81,10 @@ func main() {
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
-		wish.WithPublicKeyAuth(GetPublicKeyAuth),
+		wish.WithPublicKeyAuth(makeGetPublicKeyAuth(db)),
 
 		wish.WithMiddleware(
-			bubbletea.Middleware(teaHandler),
+			bubbletea.Middleware(makeTeaHandler(db)),
 			activeterm.Middleware(),
 			logging.Middleware(),
 		),
@@ -132,7 +132,7 @@ func ConvertKey(k ssh.PublicKey) string {
 	return strings.TrimSpace(string(gossh.MarshalAuthorizedKey(k)[:]))
 }
 
-func GetPublicKeyAuth(context ssh.Context, key ssh.PublicKey) bool {
+func GetPublicKeyAuth(context ssh.Context, db *sql.DB, key ssh.PublicKey) bool {
 	username := strings.Split(context.User(), ":")[0];
 	log.Infof("New connection with username: %s", username)
 	log.Info("Trying public key")
@@ -157,7 +157,7 @@ func GetPublicKeyAuth(context ssh.Context, key ssh.PublicKey) bool {
 }
 
 
-func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+func teaHandler(s ssh.Session, db *sql.DB) (tea.Model, []tea.ProgramOption) {
 	username := strings.Split(s.Context().User(), ":")[0];
 	guest := s.Context().Value("guest").(bool)
 	verified := s.Context().Value("verified").(bool)
@@ -169,7 +169,7 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
 	if (!guest && verified) {
 		user := s.Context().Value("user").(SavedUser)
-		model =  getBoardModel(renderer, user)
+		model =  getBoardModel(renderer, db, user)
 	} else if (!guest && !verified) {
 		model = getUnverifiedModel(renderer, username)
 	} else {
@@ -197,4 +197,16 @@ func openDB(dsn string) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func makeTeaHandler(db *sql.DB) func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+    return func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+        return teaHandler(s, db)
+    }
+}
+
+func  makeGetPublicKeyAuth(db *sql.DB) func(context ssh.Context, key ssh.PublicKey) bool {
+	return func(context ssh.Context, key ssh.PublicKey) bool {
+		return GetPublicKeyAuth(context, db, key)
+	}
 }

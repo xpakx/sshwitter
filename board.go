@@ -1,17 +1,20 @@
 package main
+
 import (
+	"database/sql"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func getBoardModel(renderer *lipgloss.Renderer, user SavedUser) (BoardModel) {
+func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (BoardModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
 
 	tabs := []tea.Model{ }
 	if (user.administrator) {
-		tabs = append(tabs, getModeratorTab(renderer))
+		tabs = append(tabs, getModeratorTab(renderer, db))
 	}
 
 	return BoardModel{ 
