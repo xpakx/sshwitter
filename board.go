@@ -40,6 +40,7 @@ func (m BoardModel) Init() tea.Cmd {
 }
 
 func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -47,7 +48,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
-	return m, nil
+	m.tabs[m.currentTab], cmd = m.tabs[m.currentTab].Update(msg)
+	return m, cmd
 }
 
 func (m BoardModel) View() string {

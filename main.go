@@ -49,6 +49,16 @@ var users = map[string]SavedUser{
 		email: "",
 		username: "test",
 	},
+	"test2" : {verified: false, username: "test2"},
+	"test3" : {verified: false, username: "test3"},
+	"test4" : {verified: false, username: "test4"},
+	"test5" : {verified: false, username: "test5"},
+	"test6" : {verified: false, username: "test6"},
+	"test7" : {verified: false, username: "test7"},
+	"test8" : {verified: false, username: "test8"},
+	"test9" : {verified: false, username: "test9"},
+	"test10" : {verified: false, username: "test10"},
+	"test11" : {verified: false, username: "test11"},
 }
 
 func main() {
