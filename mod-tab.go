@@ -105,7 +105,7 @@ func (m ModeratorTabModel) View() string {
 
 		}
 	} else {
-		m.quitStyle.Render("No users")
+		doc.WriteString(m.quitStyle.Render("No users"))
 	}
 
 	return doc.String()

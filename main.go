@@ -21,6 +21,9 @@ import (
 	"github.com/charmbracelet/wish/bubbletea"
 
 	gossh "golang.org/x/crypto/ssh"
+
+	"database/sql"
+	_ "github.com/lib/pq"
 )
 
 // TODO: move to yaml/env
@@ -62,6 +65,19 @@ var users = map[string]SavedUser{
 }
 
 func main() {
+	db, dbErr := openDB("postgresql://root:password@localhost:5432/sshwitter?sslmode=disable")
+	if dbErr != nil {
+		log.Error(dbErr.Error())
+		return
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}(db)
+
+
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
@@ -75,7 +91,6 @@ func main() {
 	)
 
 	if (dev) { s.SetOption(wish.WithPasswordAuth(GetPasswordAuth)) }
-
 
 	if err != nil {
 		log.Error("Could not start server", "error", err)
@@ -162,4 +177,24 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 		model = getRegisterModel(renderer, username, publicKey)
 	}
 	return model, []tea.ProgramOption{tea.WithAltScreen()}
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(5)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
