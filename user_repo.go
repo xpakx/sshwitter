@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+
 	"github.com/charmbracelet/log"
 )
 
@@ -53,4 +55,23 @@ func DeleteUser(user SavedUser) {
 func GetUser(username string) (SavedUser, bool) {
 	user, found := users[username]
 	return user, found
+}
+
+func CreateUserTable(db *sql.DB) {
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS users (
+		id SERIAL PRIMARY KEY,
+		key VARCHAR(50) UNIQUE NOT NULL,
+		username VARCHAR(50) UNIQUE NOT NULL,
+		email VARCHAR(100) NOT NULL,
+		verified BOOLEAN NOT NULL,
+		administrator BOOLEAN NOT NULL
+	);`
+
+	_, err := db.Exec(createTableSQL)
+	if err != nil {
+		log.Fatalf("Failed to create table: %v", err)
+	}
+
+	log.Info("Table 'users' created successfully!")
 }

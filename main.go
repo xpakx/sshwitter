@@ -49,6 +49,8 @@ func main() {
 		}
 	}(db)
 
+	CreateUserTable(db)
+
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
