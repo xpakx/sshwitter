@@ -6,12 +6,16 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 func getModeratorTab(renderer *lipgloss.Renderer, db *sql.DB) (ModeratorTabModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
-	unverifiedUsers :=  GetUnverifiedUsers()
+	unverifiedUsers, err :=  GetUnverifiedUsers(db)
+	if (err != nil) {
+		log.Debug("Error while fetching users")
+	}
 	prefixStyle := renderer.NewStyle().
 			Foreground(lipgloss.Color("#1da1f2"))
 

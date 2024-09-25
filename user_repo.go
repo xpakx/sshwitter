@@ -91,12 +91,35 @@ func CreateUserTable(db *sql.DB) {
 	log.Info("Table 'users' created successfully!")
 }
 
-func GetUnverifiedUsers() []SavedUser {
-	var result []SavedUser = make([]SavedUser, 0)
-	for _, user := range users {
-		if !user.verified {
-			result = append(result, user)
-		}
+func findQuery(db *sql.DB, query string) ([]SavedUser, error) {
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
 	}
-	return result
+	defer rows.Close()
+
+	var users []SavedUser
+	for rows.Next() {
+		var user SavedUser
+		if err := rows.Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func GetAllUsers(db *sql.DB) ([]SavedUser, error) {
+	query := `SELECT id, key, username, email, verified, administrator FROM users`
+	return findQuery(db, query)
+}
+
+func GetUnverifiedUsers(db *sql.DB) ([]SavedUser, error) {
+	query := `SELECT id, key, username, email, verified, administrator FROM users WHERE verified = false`
+	return findQuery(db, query)
 }
