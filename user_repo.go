@@ -16,17 +16,6 @@ type SavedUser struct {
 	id              int64
 }
 
-// TODO: move to db
-var users = map[string]SavedUser{
-	"test" : { 
-		key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDQ2EOmuzeJo6LN4jg7Vuvf0BSjrqDMSguc3Z6i0zkVURz5Bb61BZlG7PpyqOQ1aeISNfoMSpVwx1fQytIvQBfpF6OX+XMI/wzgOEvbPNeQ0RHsPJjq0x6wMLNEWpPl5f07pDgBlWB8IkBTKvSZQje/WsEwDvUnFRrWcC8PHs2H/WRpm+wagg9T5N6jDqlC711DJEWIyKwl744QHK4NBnyXHfK+0pW/JfhEelyQ+bTVfWNDu9V5uZI69hiKZNs4UANhAoUEhhZIy60ZHho6Zn8JkZkjORMwGi/hi8lUaIDYXXcqKGqKQdU2HU5NgpWVO3/w7KRQceegDiMO5Aa/yMEtdVi0B2NmUGVTZcCEwkqWbACqG5r23AmgrMX/Hh8L/9Z1nFwnxCY2bUd29DQI1q7GzTwYIxNi9y7/8H5+gmU6Yn3Wm5mUjpxWLF9QbU0fOFNZ/WO1h3rRYCwoouJ4ixWuCM6BLcBuuEutx24mjBaO3x0p68XJ8rxMuvS/n9TwTywPfeDS5Yft1hHovyRt1vSAHLxd8eSP65vJHJwsYAL8psGbm68CyYnzf8D4CPSJh4DSCQRzNnfFjYozX9QuXAhPtJkjPI7w6mJyPmjUaDB+sOkolIqIdF0jBXuaB/Hv/03H3ul5+SqpB0s37Wh0rwI2ORX0Ct45pYjj78WtAkukEQ==",
-		verified: true,
-		administrator: true,
-		email: "",
-		username: "test",
-	},
-}
-
 func SaveUser(db *sql.DB, publicKey string, username string, email string) (int64, error) {
 	log.Info("Saving user to db")
 	query := `INSERT INTO users (key, username, email, verified, administrator)
@@ -70,8 +59,26 @@ func AcceptUser(db *sql.DB, user SavedUser) error {
 	return nil
 }
 
-func DeleteUser(user SavedUser) {
-	delete(users, user.username)
+func DeleteUser(db *sql.DB, user SavedUser) error {
+	query := `DELETE FROM users WHERE id = $1`
+	result, err := db.Exec(query, user.id)
+	if err != nil {
+		log.Errorf("failed to delete user: %v", err)
+		return fmt.Errorf("failed to delete user: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Errorf("failed to retrieve affected rows: %v", err)
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Errorf("no user found with username: %s", user.username)
+		return fmt.Errorf("no user found with username: %s", user.username)
+	}
+
+	return nil
 }
 
 func GetUserByUsername(db *sql.DB, username string) (SavedUser, bool) {

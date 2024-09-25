@@ -70,7 +70,8 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "delete":
 			if len(m.users) > 0 {
-				DeleteUser(m.users[m.current])
+				// TODO: move to command
+				DeleteUser(m.db, m.users[m.current])
 				m.RemoveCurrentFromList()
 			}
 		}
