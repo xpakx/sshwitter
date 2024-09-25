@@ -111,7 +111,7 @@ func GetPublicKeyAuth(context ssh.Context, db *sql.DB, key ssh.PublicKey) bool {
 	log.Infof("New connection with username: %s", username)
 	log.Info("Trying public key")
 
-	if savedUser, found :=  GetUser(username); found {
+	if savedUser, found := GetUserByUsername(db, username); found {
 		parsed, _, _, _, _ := ssh.ParseAuthorizedKey(
 			[]byte(savedUser.key),
 		)

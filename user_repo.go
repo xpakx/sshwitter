@@ -12,6 +12,7 @@ type SavedUser struct {
 	administrator   bool
 	email           string
 	username        string
+	id              int64
 }
 
 // TODO: move to db
@@ -52,9 +53,23 @@ func DeleteUser(user SavedUser) {
 	delete(users, user.username)
 }
 
-func GetUser(username string) (SavedUser, bool) {
-	user, found := users[username]
-	return user, found
+func GetUserByUsername(db *sql.DB, username string) (SavedUser, bool) {
+	var user SavedUser
+	log.Debug("Fetching user from db")
+	query := `SELECT id, key, username, email, verified, administrator FROM users WHERE username = $1`
+	err := db.QueryRow(query, username).
+		Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Debug("No user found")
+			return SavedUser{}, false
+		}
+		log.Errorf("Error while fetching user: %s", err)
+		return SavedUser{}, false
+	}
+
+	return user, true
 }
 
 func CreateUserTable(db *sql.DB) {
@@ -85,4 +100,3 @@ func GetUnverifiedUsers() []SavedUser {
 	}
 	return result
 }
-
