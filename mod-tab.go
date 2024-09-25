@@ -26,16 +26,6 @@ func getModeratorTab(renderer *lipgloss.Renderer, db *sql.DB) (ModeratorTabModel
 	}
 }
 
-func GetUnverifiedUsers() []SavedUser {
-	var result []SavedUser = make([]SavedUser, 0)
-	for _, user := range users {
-		if !user.verified {
-			result = append(result, user)
-		}
-	}
-	return result
-}
-
 type ModeratorTabModel struct {
 	txtStyle     lipgloss.Style
 	quitStyle    lipgloss.Style

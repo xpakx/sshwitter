@@ -75,3 +75,14 @@ func CreateUserTable(db *sql.DB) {
 
 	log.Info("Table 'users' created successfully!")
 }
+
+func GetUnverifiedUsers() []SavedUser {
+	var result []SavedUser = make([]SavedUser, 0)
+	for _, user := range users {
+		if !user.verified {
+			result = append(result, user)
+		}
+	}
+	return result
+}
+
