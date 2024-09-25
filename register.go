@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -8,7 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func getRegisterModel(renderer *lipgloss.Renderer, username string, publicKey string) (RegisterModel) {
+func getRegisterModel(renderer *lipgloss.Renderer, db *sql.DB, username string, publicKey string) (RegisterModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
@@ -42,6 +43,7 @@ func getRegisterModel(renderer *lipgloss.Renderer, username string, publicKey st
 		currentView: 0,
 		pages: pages,
 		publicKey: publicKey,
+		db: db,
 	}
 }
 
@@ -57,6 +59,7 @@ type RegisterModel struct {
 	inactiveDot  string
 	currentView  int
 	pages        []tea.Model
+	db           *sql.DB
 }
 
 func (m RegisterModel) Init() tea.Cmd {
@@ -121,7 +124,7 @@ func (m RegisterModel) Register() {
 	} else {
 		return 
 	}
-	SaveUser(m.publicKey, username, email)
+	SaveUser(m.db, m.publicKey, username, email)
 
 }
 

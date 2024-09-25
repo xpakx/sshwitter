@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/charmbracelet/log"
 )
@@ -26,22 +27,22 @@ var users = map[string]SavedUser{
 	},
 }
 
-func SaveUser(publicKey string, username string, email string) {
-	_, exists := users[username]
-	if !exists { // TODO: error; also, it's not thread safe, but map is only a temporary solution anyways
-		val := SavedUser {
-			key: publicKey,
-			verified: false,
-			administrator: false,
-			username: username,
-			email: email,
-		}
-		users[username] = val
-		log.Info("Saved new user")
+func SaveUser(db *sql.DB, publicKey string, username string, email string) (int64, error) {
+	query := `INSERT INTO users (key, username, email, verified, administrator)
+			  VALUES ($1, $2, $3, $4, $5)`
+	result, err := db.Exec(query, publicKey, username, email, false, false)
 
-	} else {
-		log.Error("User already exists")
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert user: %v", err)
 	}
+
+	log.Info("Saved new user")
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve last inserted ID: %v", err)
+	}
+
+	return id, nil
 }
 
 func AcceptUser(user SavedUser) {

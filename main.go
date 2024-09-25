@@ -148,7 +148,7 @@ func teaHandler(s ssh.Session, db *sql.DB) (tea.Model, []tea.ProgramOption) {
 		model = getUnverifiedModel(renderer, username)
 	} else {
 		publicKey := s.Context().Value("publicKey").(string)
-		model = getRegisterModel(renderer, username, publicKey)
+		model = getRegisterModel(renderer, db, username, publicKey)
 	}
 	return model, []tea.ProgramOption{tea.WithAltScreen()}
 }
