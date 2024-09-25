@@ -125,7 +125,6 @@ func (m RegisterModel) Register() {
 		return 
 	}
 	SaveUser(m.db, m.publicKey, username, email)
-
 }
 
 func (m RegisterModel) UpdatePageThree()  {

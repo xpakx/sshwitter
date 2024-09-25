@@ -28,11 +28,13 @@ var users = map[string]SavedUser{
 }
 
 func SaveUser(db *sql.DB, publicKey string, username string, email string) (int64, error) {
+	log.Info("Saving user to db")
 	query := `INSERT INTO users (key, username, email, verified, administrator)
 			  VALUES ($1, $2, $3, $4, $5)`
 	result, err := db.Exec(query, publicKey, username, email, false, false)
 
 	if err != nil {
+		log.Errorf("failed to insert user: %v", err)
 		return 0, fmt.Errorf("failed to insert user: %v", err)
 	}
 
@@ -77,7 +79,7 @@ func CreateUserTable(db *sql.DB) {
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
-		key VARCHAR(50) UNIQUE NOT NULL,
+		key TEXT UNIQUE NOT NULL,
 		username VARCHAR(50) UNIQUE NOT NULL,
 		email VARCHAR(100) NOT NULL,
 		verified BOOLEAN NOT NULL,
