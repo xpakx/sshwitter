@@ -64,7 +64,8 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "enter":
 			if len(m.users) > 0 {
-				AcceptUser(m.users[m.current])
+				// TODO: move to command
+				AcceptUser(m.db, m.users[m.current])
 				m.RemoveCurrentFromList()
 			}
 		case "delete":

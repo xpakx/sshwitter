@@ -47,9 +47,27 @@ func SaveUser(db *sql.DB, publicKey string, username string, email string) (int6
 	return id, nil
 }
 
-func AcceptUser(user SavedUser) {
-	user.verified = true;
-	users[user.username] = user
+func AcceptUser(db *sql.DB, user SavedUser) error {
+	query := `UPDATE users SET verified = true WHERE id = $1`
+
+	result, err := db.Exec(query, user.id)
+	if err != nil {
+		log.Errorf("failed to update user verification status: %v", err)
+		return fmt.Errorf("failed to update user verification status: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Errorf("failed to retrieve affected rows: %v", err)
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Errorf("no user found with username: %s", user.username)
+		return fmt.Errorf("no user found with username: %s", user.username)
+	}
+
+	return nil
 }
 
 func DeleteUser(user SavedUser) {
