@@ -53,6 +53,16 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
+		case "alt+1":
+			m.currentTab = min(0, len(m.tabs)-1)
+		case "alt+2":
+			m.currentTab = min(1, len(m.tabs)-1)
+		case "alt+3":
+			m.currentTab = min(2, len(m.tabs)-1)
+		case "alt+4":
+			m.currentTab = min(3, len(m.tabs)-1)
+		case "alt+5":
+			m.currentTab = min(4, len(m.tabs)-1)
 		}
 	}
 	if len(m.tabs) > 0 {
