@@ -46,6 +46,10 @@ func (m BoardModel) Init() tea.Cmd {
 	return nil
 }
 
+func (m BoardModel) GetTab(index int) int {
+	return min(index, len(m.tabs)-1)
+}
+
 func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -54,15 +58,15 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "alt+1":
-			m.currentTab = min(0, len(m.tabs)-1)
+			m.currentTab = m.GetTab(0)
 		case "alt+2":
-			m.currentTab = min(1, len(m.tabs)-1)
+			m.currentTab = m.GetTab(1)
 		case "alt+3":
-			m.currentTab = min(2, len(m.tabs)-1)
+			m.currentTab = m.GetTab(2)
 		case "alt+4":
-			m.currentTab = min(3, len(m.tabs)-1)
+			m.currentTab = m.GetTab(3)
 		case "alt+5":
-			m.currentTab = min(4, len(m.tabs)-1)
+			m.currentTab = m.GetTab(4)
 		}
 	}
 	if len(m.tabs) > 0 {
