@@ -13,9 +13,13 @@ func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Boa
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
 
 	tabs := []tea.Model{ }
+	tabs = append(tabs, getProfileView(renderer, db, user.username))
+
+
 	if (user.administrator) {
 		tabs = append(tabs, getModeratorTab(renderer, db))
 	}
+
 
 	return BoardModel{ 
 		name: "sshwitter", 
