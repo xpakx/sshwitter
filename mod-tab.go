@@ -81,9 +81,18 @@ func (m ModeratorTabModel) GetCurrentIndex() int {
 	return -1
 }
 
+func (m ModeratorTabModel) GetIndexByUsername(username string) int {
+	for i, user := range m.users {
+		if username == user.username {
+			return i
+		}
+	}
+	return -1
+}
 
-func (m *ModeratorTabModel) RemoveCurrentFromList() {
-	current := m.GetCurrentIndex()
+
+func (m *ModeratorTabModel) RemoveFromList(username string) {
+	current := m.GetIndexByUsername(username)
 	if current < 0 {
 		return
 	}
@@ -95,6 +104,10 @@ func (m *ModeratorTabModel) RemoveCurrentFromList() {
 	m.table.SetRows(rows)
 }
 
+type DeleteUserMsg struct {
+	username string
+}
+
 func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -104,19 +117,24 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			if len(m.users) > 0 {
-				// TODO: move to command
 				user := m.GetCurrentChoice()
-				AcceptUser(m.db, user)
-				m.RemoveCurrentFromList()
+				return m, func() tea.Msg {
+					AcceptUser(m.db, user)
+					return DeleteUserMsg{user.username}
+				}
 			}
 		case "delete":
 			if len(m.users) > 0 {
-				// TODO: move to command
 				user := m.GetCurrentChoice()
-				DeleteUser(m.db, user)
-				m.RemoveCurrentFromList()
+				return m, func() tea.Msg {
+					DeleteUser(m.db, user)
+					return DeleteUserMsg{user.username}
+				}
 			}
 		}
+	case DeleteUserMsg:
+		m.RemoveFromList(msg.username)
+		return m, nil
 	}
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd
