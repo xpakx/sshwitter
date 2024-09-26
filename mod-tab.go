@@ -117,7 +117,10 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			if len(m.users) > 0 {
-				user := m.GetCurrentChoice()
+				user, found := m.GetCurrentChoice()
+				if !found {
+					break
+				}
 				return m, func() tea.Msg {
 					AcceptUser(m.db, user)
 					return DeleteUserMsg{user.username}
@@ -125,7 +128,10 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "delete":
 			if len(m.users) > 0 {
-				user := m.GetCurrentChoice()
+				user, found := m.GetCurrentChoice()
+				if !found {
+					break
+				}
 				return m, func() tea.Msg {
 					DeleteUser(m.db, user)
 					return DeleteUserMsg{user.username}
@@ -140,14 +146,18 @@ func (m ModeratorTabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m ModeratorTabModel) GetCurrentChoice() SavedUser {
-	username := m.table.SelectedRow()[1]
+func (m ModeratorTabModel) GetCurrentChoice() (SavedUser, bool) {
+	current := m.table.SelectedRow()
+	if len(current) < 2 {
+		return SavedUser{}, false
+	}
+	username := current[1]
 	for _, user := range m.users {
 		if username == user.username {
-			return user
+			return user, true
 		}
 	}
-	return SavedUser{}
+	return SavedUser{}, false
 }
 
 func (m ModeratorTabModel) View() string {
