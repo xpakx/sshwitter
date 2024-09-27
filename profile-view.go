@@ -10,11 +10,20 @@ import (
 )
 
 func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (ProfileViewModel) {
-	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	width := 150 // TODO
+	infoWidth := 20
+	infoStyle := renderer.NewStyle().
+		MaxWidth(infoWidth).
+		Width(infoWidth).
+		PaddingRight(2)
+
+	postStyle := renderer.NewStyle().
+		BorderLeft(true).
+		BorderStyle(lipgloss.NormalBorder()).
+		PaddingLeft(2).
+		BorderForeground(lipgloss.Color("8"))
+
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
-	headerStyle := renderer.NewStyle().
-		Foreground(lipgloss.Color("5")).
-		Bold(true)
 
 	user, found :=  GetUserByUsername(db, username)
 	if (!found) {
@@ -25,23 +34,27 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (P
 	info := getProfileInfo(renderer, db, user)
 
 	return ProfileViewModel{ 
-		txtStyle: txtStyle, 
+		infoStyle: infoStyle, 
 		quitStyle: quitStyle,
-		headerStyle: headerStyle,
+		postStyle: postStyle,
+		infoWidth: infoWidth,
 		user: user,
 		db: db,
 		info: info,
+		width: width,
 	}
 }
 
 
 type ProfileViewModel struct {
-	txtStyle     lipgloss.Style
+	infoStyle    lipgloss.Style
 	quitStyle    lipgloss.Style
-	headerStyle  lipgloss.Style
+	postStyle    lipgloss.Style
 	info         ProfileInfoModel
 	user         SavedUser
 	db           *sql.DB
+	width        int
+	infoWidth    int
 }
 
 func (m ProfileViewModel) Init() tea.Cmd {
@@ -54,18 +67,19 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ProfileViewModel) View() string {
-	return m.info.View()
+	postsWidth := m.width - m.infoWidth
+	info := m.infoStyle.
+		Render(m.info.View())
+	posts := m.postStyle.
+	        Width(postsWidth).
+	        MaxWidth(postsWidth).
+		Render("posts")
+	doc := lipgloss.JoinHorizontal(lipgloss.Left,
+		info,
+		posts,
+	)
+	return doc
 }
-
-
-
-
-
-
-
-
-
-
 
 func getProfileInfo(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (ProfileInfoModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
