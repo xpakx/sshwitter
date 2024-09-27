@@ -16,22 +16,21 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (P
 		Foreground(lipgloss.Color("5")).
 		Bold(true)
 
-	numberStyle := renderer.NewStyle().
-		Bold(true)
-
 	user, found :=  GetUserByUsername(db, username)
 	if (!found) {
 		log.Info("No such user")
 		// TODO: 404 page
 	}
 
+	info := getProfileInfo(renderer, db, user)
+
 	return ProfileViewModel{ 
 		txtStyle: txtStyle, 
 		quitStyle: quitStyle,
 		headerStyle: headerStyle,
-		numberStyle: numberStyle,
 		user: user,
 		db: db,
+		info: info,
 	}
 }
 
@@ -40,7 +39,7 @@ type ProfileViewModel struct {
 	txtStyle     lipgloss.Style
 	quitStyle    lipgloss.Style
 	headerStyle  lipgloss.Style
-	numberStyle  lipgloss.Style
+	info         ProfileInfoModel
 	user         SavedUser
 	db           *sql.DB
 }
@@ -55,6 +54,58 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ProfileViewModel) View() string {
+	return m.info.View()
+}
+
+
+
+
+
+
+
+
+
+
+
+func getProfileInfo(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (ProfileInfoModel) {
+	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
+	headerStyle := renderer.NewStyle().
+		Foreground(lipgloss.Color("5")).
+		Bold(true)
+	numberStyle := renderer.NewStyle().
+		Bold(true)
+
+	return ProfileInfoModel{ 
+		txtStyle: txtStyle, 
+		quitStyle: quitStyle,
+		headerStyle: headerStyle,
+		numberStyle: numberStyle,
+		user: user,
+		db: db,
+	}
+}
+
+
+type ProfileInfoModel struct {
+	txtStyle     lipgloss.Style
+	quitStyle    lipgloss.Style
+	headerStyle  lipgloss.Style
+	numberStyle  lipgloss.Style
+	user         SavedUser
+	db           *sql.DB
+}
+
+func (m ProfileInfoModel) Init() tea.Cmd {
+	return nil
+}
+
+
+func (m ProfileInfoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	return m, nil
+}
+
+func (m ProfileInfoModel) View() string {
 	doc := strings.Builder{}
 	username := m.headerStyle.Render(m.user.username)  
 	doc.WriteString(username)
