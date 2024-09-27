@@ -32,6 +32,12 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (P
 	}
 
 	info := getProfileInfo(renderer, db, user)
+	posts := make([]PostModel, 0)
+	posts = append(posts, getPostView(renderer, user))
+	posts = append(posts, getPostView(renderer, user))
+	posts = append(posts, getPostView(renderer, user))
+	posts = append(posts, getPostView(renderer, user))
+	posts = append(posts, getPostView(renderer, user))
 
 	return ProfileViewModel{ 
 		infoStyle: infoStyle, 
@@ -41,6 +47,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (P
 		user: user,
 		db: db,
 		info: info,
+		posts: posts,
 	}
 }
 
@@ -50,6 +57,7 @@ type ProfileViewModel struct {
 	quitStyle    lipgloss.Style
 	postStyle    lipgloss.Style
 	info         ProfileInfoModel
+	posts        []PostModel
 	user         SavedUser
 	db           *sql.DB
 	width        int
@@ -73,13 +81,19 @@ func (m ProfileViewModel) View() string {
 	postsWidth := max(m.width - (m.infoWidth + 1), 20)
 	info := m.infoStyle.
 		Render(m.info.View())
-	posts := m.postStyle.
+	posts := make([]string, 0)
+	for _, post := range m.posts {
+		posts = append(posts, post.View())
+	}
+	renderedPosts := lipgloss.JoinVertical(lipgloss.Top, posts...)
+	
+	postList := m.postStyle.
 	        Width(postsWidth).
 	        MaxWidth(postsWidth).
-		Render("posts")
+		Render(renderedPosts)
 	doc := lipgloss.JoinHorizontal(lipgloss.Left,
 		info,
-		posts,
+		postList,
 	)
 	return doc
 }
@@ -143,5 +157,63 @@ func (m ProfileInfoModel) View() string {
 	doc.WriteString("\n")
 	doc.WriteString(m.numberStyle.Render("0"))
 	doc.WriteString(m.quitStyle.Render(" Followers"))
+	return doc.String()
+}
+
+
+
+
+
+
+
+func getPostView(renderer *lipgloss.Renderer, user SavedUser) (PostModel) {
+	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
+	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
+	headerStyle := renderer.NewStyle().
+		Foreground(lipgloss.Color("5"))
+	numberStyle := quitStyle.
+		Bold(true)
+
+	return PostModel{ 
+		txtStyle: txtStyle, 
+		quitStyle: quitStyle,
+		headerStyle: headerStyle,
+		numberStyle: numberStyle,
+		user: user,
+	}
+}
+
+type PostModel struct {
+	txtStyle     lipgloss.Style
+	quitStyle    lipgloss.Style
+	headerStyle  lipgloss.Style
+	numberStyle  lipgloss.Style
+	user         SavedUser
+}
+
+func (m PostModel) Init() tea.Cmd {
+	return nil
+}
+
+
+func (m PostModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	return m, nil
+}
+
+func (m PostModel) View() string {
+	doc := strings.Builder{}
+	doc.WriteString(m.headerStyle.Render(m.user.username))
+	doc.WriteString(m.quitStyle.Render(" · "))
+	doc.WriteString(m.quitStyle.Render("just now"))
+	doc.WriteString("\n")
+
+	doc.WriteString("post")
+	doc.WriteString("\n")
+	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.quitStyle.Render(" Likes"))
+	doc.WriteString("  ")
+	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.quitStyle.Render(" Replies"))
+	doc.WriteString("\n")
 	return doc.String()
 }
