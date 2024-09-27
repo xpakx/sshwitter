@@ -10,12 +10,12 @@ import (
 )
 
 func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (ProfileViewModel) {
-	width := 150 // TODO
 	infoWidth := 20
 	infoStyle := renderer.NewStyle().
 		MaxWidth(infoWidth).
 		Width(infoWidth).
-		PaddingRight(2)
+		PaddingRight(2).
+		PaddingLeft(1)
 
 	postStyle := renderer.NewStyle().
 		BorderLeft(true).
@@ -41,7 +41,6 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (P
 		user: user,
 		db: db,
 		info: info,
-		width: width,
 	}
 }
 
@@ -63,11 +62,15 @@ func (m ProfileViewModel) Init() tea.Cmd {
 
 
 func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg: 
+		m.width = msg.Width
+	}
 	return m, nil
 }
 
 func (m ProfileViewModel) View() string {
-	postsWidth := m.width - m.infoWidth
+	postsWidth := max(m.width - (m.infoWidth + 1), 20)
 	info := m.infoStyle.
 		Render(m.info.View())
 	posts := m.postStyle.
