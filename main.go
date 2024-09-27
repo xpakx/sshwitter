@@ -50,6 +50,7 @@ func main() {
 	}(db)
 
 	CreateUserTable(db)
+	CreatePostTable(db)
 
 
 	s, err := wish.NewServer(
