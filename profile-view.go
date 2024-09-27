@@ -7,9 +7,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/bubbles/textarea"
 )
 
-func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (ProfileViewModel) {
+func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, user SavedUser) (ProfileViewModel) {
 	infoWidth := 20
 	infoStyle := renderer.NewStyle().
 		MaxWidth(infoWidth).
@@ -25,29 +26,43 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string) (P
 
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 
-	user, found :=  GetUserByUsername(db, username)
+	owner, found :=  GetUserByUsername(db, username)
 	if (!found) {
 		log.Info("No such user")
 		// TODO: 404 page
 	}
+	isOwner := user.id == owner.id
 
-	info := getProfileInfo(renderer, db, user)
+	info := getProfileInfo(renderer, db, owner)
 	posts := make([]PostModel, 0)
-	posts = append(posts, getPostView(renderer, user))
-	posts = append(posts, getPostView(renderer, user))
-	posts = append(posts, getPostView(renderer, user))
-	posts = append(posts, getPostView(renderer, user))
-	posts = append(posts, getPostView(renderer, user))
+	posts = append(posts, getPostView(renderer, owner))
+	posts = append(posts, getPostView(renderer, owner))
+	posts = append(posts, getPostView(renderer, owner))
+	posts = append(posts, getPostView(renderer, owner))
+	posts = append(posts, getPostView(renderer, owner))
+
+	textInput := textarea.New()
+	textInput.Placeholder = "Type a message..."
+
+	textInput.CharLimit = 280
+	textInput.SetWidth(30)
+	textInput.SetHeight(3)
+	textInput.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	textInput.ShowLineNumbers = false
 
 	return ProfileViewModel{ 
 		infoStyle: infoStyle, 
 		quitStyle: quitStyle,
 		postStyle: postStyle,
 		infoWidth: infoWidth,
-		user: user,
+		owner: owner,
 		db: db,
 		info: info,
 		posts: posts,
+		user: user,
+		isOwner: isOwner,
+		text: textInput,
+		inputOpened: false,
 	}
 }
 
@@ -58,10 +73,14 @@ type ProfileViewModel struct {
 	postStyle    lipgloss.Style
 	info         ProfileInfoModel
 	posts        []PostModel
+	owner         SavedUser
 	user         SavedUser
 	db           *sql.DB
 	width        int
 	infoWidth    int
+	isOwner      bool
+	text         textarea.Model
+	inputOpened  bool
 }
 
 func (m ProfileViewModel) Init() tea.Cmd {
@@ -73,6 +92,27 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
+	case tea.KeyMsg:
+		if m.text.Focused() {
+			switch msg.String() {
+			case "esc":
+				m.text.Blur()
+				m.inputOpened = false
+				return m, nil
+			default:
+				var cmd tea.Cmd
+				m.text, cmd = m.text.Update(msg)
+				return m, cmd
+			}
+		} else {
+			switch msg.String() {
+			case "p":
+				if m.isOwner {
+					m.inputOpened = true
+					return m, m.text.Focus()
+				}
+			}
+		}
 	}
 	return m, nil
 }
@@ -81,7 +121,11 @@ func (m ProfileViewModel) View() string {
 	postsWidth := max(m.width - (m.infoWidth + 1), 20)
 	info := m.infoStyle.
 		Render(m.info.View())
+
 	posts := make([]string, 0)
+	if m.inputOpened {
+		posts = append(posts, m.text.View() + "\n")
+	}
 	for _, post := range m.posts {
 		posts = append(posts, post.View())
 	}
