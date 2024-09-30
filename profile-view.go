@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/charmbracelet/bubbles/textarea"
 )
 
 func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, user SavedUser) (ProfileViewModel) {
@@ -98,6 +98,15 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc":
 				m.text.Blur()
 				m.inputOpened = false
+				return m, nil
+			case "enter":
+				m.text.Blur()
+				m.inputOpened = false
+				text := m.text.Value()
+				if (text == "") { // TODO
+					return m, nil
+				}
+				SavePost(m.db, m.user, text) // TODO: extract to command
 				return m, nil
 			default:
 				var cmd tea.Cmd
