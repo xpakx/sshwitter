@@ -48,3 +48,30 @@ func SavePost(db *sql.DB, user SavedUser, content string) (int64, error) {
 
 	return id, nil
 }
+
+func DeletePost(db *sql.DB, post Post, user SavedUser) error {
+	if user.id != post.userId {
+		log.Errorf("Cannot delete, user %s tried to delete post %d", user.username, post.id)
+		return fmt.Errorf("Cannot delete")
+	}
+
+	query := `DELETE FROM posts WHERE id = $1`
+	result, err := db.Exec(query, post.id)
+	if err != nil {
+		log.Errorf("failed to delete post: %v", err)
+		return fmt.Errorf("failed to delete post: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Errorf("failed to retrieve affected rows: %v", err)
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Errorf("no post found with id: %d", post.id)
+		return fmt.Errorf("no post found with id: %d", post.id)
+	}
+
+	return nil
+}
