@@ -32,14 +32,16 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 		// TODO: 404 page
 	}
 	isOwner := user.id == owner.id
+	rposts, err := FindUserPosts(db, owner)
+	if err != nil {
+		log.Error(err)
+	}
 
 	info := getProfileInfo(renderer, db, owner)
 	posts := make([]PostModel, 0)
-	posts = append(posts, getPostView(renderer, owner))
-	posts = append(posts, getPostView(renderer, owner))
-	posts = append(posts, getPostView(renderer, owner))
-	posts = append(posts, getPostView(renderer, owner))
-	posts = append(posts, getPostView(renderer, owner))
+	for _, post := range rposts {
+		posts = append(posts, getPostView(renderer, post))
+	}
 
 	textInput := textarea.New()
 	textInput.Placeholder = "Type a message..."
@@ -219,7 +221,7 @@ func (m ProfileInfoModel) View() string {
 
 
 
-func getPostView(renderer *lipgloss.Renderer, user SavedUser) (PostModel) {
+func getPostView(renderer *lipgloss.Renderer, post Post) (PostModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	headerStyle := renderer.NewStyle().
@@ -232,7 +234,7 @@ func getPostView(renderer *lipgloss.Renderer, user SavedUser) (PostModel) {
 		quitStyle: quitStyle,
 		headerStyle: headerStyle,
 		numberStyle: numberStyle,
-		user: user,
+		post: post,
 	}
 }
 
@@ -241,7 +243,7 @@ type PostModel struct {
 	quitStyle    lipgloss.Style
 	headerStyle  lipgloss.Style
 	numberStyle  lipgloss.Style
-	user         SavedUser
+	post         Post
 }
 
 func (m PostModel) Init() tea.Cmd {
@@ -255,12 +257,12 @@ func (m PostModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m PostModel) View() string {
 	doc := strings.Builder{}
-	doc.WriteString(m.headerStyle.Render(m.user.username))
+	doc.WriteString(m.headerStyle.Render(m.post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
 	doc.WriteString(m.quitStyle.Render("just now"))
 	doc.WriteString("\n")
 
-	doc.WriteString("post")
+	doc.WriteString(m.post.content)
 	doc.WriteString("\n")
 	doc.WriteString(m.numberStyle.Render("0"))
 	doc.WriteString(m.quitStyle.Render(" Likes"))
