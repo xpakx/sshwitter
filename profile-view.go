@@ -26,22 +26,23 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 
+	headerStyle := renderer.NewStyle().
+		Foreground(lipgloss.Color("5"))
+	numberStyle := quitStyle.
+		Bold(true)
+
 	owner, found :=  GetUserByUsername(db, username)
 	if (!found) {
 		log.Info("No such user")
 		// TODO: 404 page
 	}
 	isOwner := user.id == owner.id
-	rposts, err := FindUserPosts(db, owner)
+	posts, err := FindUserPosts(db, owner)
 	if err != nil {
 		log.Error(err)
 	}
 
 	info := getProfileInfo(renderer, db, owner)
-	posts := make([]PostModel, 0)
-	for _, post := range rposts {
-		posts = append(posts, getPostView(renderer, post))
-	}
 
 	textInput := textarea.New()
 	textInput.Placeholder = "Type a message..."
@@ -57,6 +58,8 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 		quitStyle: quitStyle,
 		postStyle: postStyle,
 		infoWidth: infoWidth,
+		headerStyle: headerStyle,
+		numberStyle: numberStyle,
 		owner: owner,
 		db: db,
 		info: info,
@@ -73,8 +76,10 @@ type ProfileViewModel struct {
 	infoStyle    lipgloss.Style
 	quitStyle    lipgloss.Style
 	postStyle    lipgloss.Style
+	headerStyle  lipgloss.Style
+	numberStyle  lipgloss.Style
 	info         ProfileInfoModel
-	posts        []PostModel
+	posts        []Post
 	owner         SavedUser
 	user         SavedUser
 	db           *sql.DB
@@ -138,7 +143,7 @@ func (m ProfileViewModel) View() string {
 		posts = append(posts, m.text.View() + "\n")
 	}
 	for _, post := range m.posts {
-		posts = append(posts, post.View())
+		posts = append(posts, m.postView(post))
 	}
 	renderedPosts := lipgloss.JoinVertical(lipgloss.Top, posts...)
 	
@@ -152,6 +157,25 @@ func (m ProfileViewModel) View() string {
 	)
 	return doc
 }
+
+func (m ProfileViewModel) postView(post Post) string {
+	doc := strings.Builder{}
+	doc.WriteString(m.headerStyle.Render(post.username))
+	doc.WriteString(m.quitStyle.Render(" · "))
+	doc.WriteString(m.quitStyle.Render("just now"))
+	doc.WriteString("\n")
+
+	doc.WriteString(post.content)
+	doc.WriteString("\n")
+	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.quitStyle.Render(" Likes"))
+	doc.WriteString("  ")
+	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.quitStyle.Render(" Replies"))
+	doc.WriteString("\n")
+	return doc.String()
+}
+
 
 func getProfileInfo(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (ProfileInfoModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
@@ -212,63 +236,5 @@ func (m ProfileInfoModel) View() string {
 	doc.WriteString("\n")
 	doc.WriteString(m.numberStyle.Render("0"))
 	doc.WriteString(m.quitStyle.Render(" Followers"))
-	return doc.String()
-}
-
-
-
-
-
-
-
-func getPostView(renderer *lipgloss.Renderer, post Post) (PostModel) {
-	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
-	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
-	headerStyle := renderer.NewStyle().
-		Foreground(lipgloss.Color("5"))
-	numberStyle := quitStyle.
-		Bold(true)
-
-	return PostModel{ 
-		txtStyle: txtStyle, 
-		quitStyle: quitStyle,
-		headerStyle: headerStyle,
-		numberStyle: numberStyle,
-		post: post,
-	}
-}
-
-type PostModel struct {
-	txtStyle     lipgloss.Style
-	quitStyle    lipgloss.Style
-	headerStyle  lipgloss.Style
-	numberStyle  lipgloss.Style
-	post         Post
-}
-
-func (m PostModel) Init() tea.Cmd {
-	return nil
-}
-
-
-func (m PostModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
-}
-
-func (m PostModel) View() string {
-	doc := strings.Builder{}
-	doc.WriteString(m.headerStyle.Render(m.post.username))
-	doc.WriteString(m.quitStyle.Render(" · "))
-	doc.WriteString(m.quitStyle.Render("just now"))
-	doc.WriteString("\n")
-
-	doc.WriteString(m.post.content)
-	doc.WriteString("\n")
-	doc.WriteString(m.numberStyle.Render("0"))
-	doc.WriteString(m.quitStyle.Render(" Likes"))
-	doc.WriteString("  ")
-	doc.WriteString(m.numberStyle.Render("0"))
-	doc.WriteString(m.quitStyle.Render(" Replies"))
-	doc.WriteString("\n")
 	return doc.String()
 }
