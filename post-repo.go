@@ -32,7 +32,7 @@ func CreatePostTable(db *sql.DB) {
 
 func SavePost(db *sql.DB, user SavedUser, content string) (int64, error) {
 	log.Info("Saving post to db")
-	query := `INSERT INTO posts (content, userId)
+	query := `INSERT INTO posts (content, user_id)
 			  VALUES ($1, $2)`
 	result, err := db.Exec(query, content, user.id)
 
@@ -79,7 +79,7 @@ func DeletePost(db *sql.DB, post Post, user SavedUser) error {
 
 func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, u.user_id, u.username
+	SELECT p.id, p.content, p.user_id, u.username
 	FROM posts p
 	LEFT JOIN users u
 	ON p.user_id = u.id
