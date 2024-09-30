@@ -11,6 +11,7 @@ type Post struct {
 	id              int64
 	userId          int64
 	content         string
+	username        string
 }
 
 func CreatePostTable(db *sql.DB) {
@@ -74,4 +75,33 @@ func DeletePost(db *sql.DB, post Post, user SavedUser) error {
 	}
 
 	return nil
+}
+
+func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
+	query := `
+	SELECT p.id, p.content, u.user_id, u.username
+	FROM posts p
+	LEFT JOIN users u
+	ON p.user_id = u.id
+	WHERE p.user_id = $1`
+	rows, err := db.Query(query, user.id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.username); err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
