@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/charmbracelet/log"
 )
@@ -26,4 +27,24 @@ func CreatePostTable(db *sql.DB) {
 	}
 
 	log.Info("Table 'posts' created successfully!")
+}
+
+func SavePost(db *sql.DB, user SavedUser, content string) (int64, error) {
+	log.Info("Saving post to db")
+	query := `INSERT INTO posts (content, userId)
+			  VALUES ($1, $2)`
+	result, err := db.Exec(query, content, user.id)
+
+	if err != nil {
+		log.Errorf("failed to insert post: %v", err)
+		return 0, fmt.Errorf("failed to insert post: %v", err)
+	}
+
+	log.Info("Saved new post")
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve last inserted ID: %v", err)
+	}
+
+	return id, nil
 }
