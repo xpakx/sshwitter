@@ -162,7 +162,7 @@ func (m ProfileViewModel) postView(post Post) string {
 	doc := strings.Builder{}
 	doc.WriteString(m.headerStyle.Render(post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
-	doc.WriteString(m.quitStyle.Render("just now"))
+	doc.WriteString(m.quitStyle.Render(post.createdAt.Format("Jan 2, 2006")))
 	doc.WriteString("\n")
 
 	doc.WriteString(post.content)
