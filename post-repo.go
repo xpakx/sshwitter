@@ -86,7 +86,8 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	FROM posts p
 	LEFT JOIN users u
 	ON p.user_id = u.id
-	WHERE p.user_id = $1`
+	WHERE p.user_id = $1
+	ORDER BY p.created_at DESC`
 	rows, err := db.Query(query, user.id)
 	if err != nil {
 		return nil, err
