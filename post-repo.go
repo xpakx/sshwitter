@@ -109,3 +109,32 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 
 	return posts, nil
 }
+
+func FindAllPosts(db *sql.DB) ([]Post, error) {
+	query := `
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username
+	FROM posts p
+	LEFT JOIN users u
+	ON p.user_id = u.id
+	ORDER BY p.created_at DESC`
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username); err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
