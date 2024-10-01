@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/log"
 )
@@ -12,6 +13,7 @@ type Post struct {
 	userId          int64
 	content         string
 	username        string
+	createdAt       time.Time
 }
 
 func CreatePostTable(db *sql.DB) {
@@ -19,7 +21,8 @@ func CreatePostTable(db *sql.DB) {
 	CREATE TABLE IF NOT EXISTS posts (
 		id SERIAL PRIMARY KEY,
 		content TEXT NOT NULL,
-		user_id INTEGER REFERENCES users(id)
+		user_id INTEGER REFERENCES users(id),
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	_, err := db.Exec(createTableSQL)
@@ -79,7 +82,7 @@ func DeletePost(db *sql.DB, post Post, user SavedUser) error {
 
 func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, u.username
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username
 	FROM posts p
 	LEFT JOIN users u
 	ON p.user_id = u.id
@@ -93,7 +96,7 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.username); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
