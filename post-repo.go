@@ -22,7 +22,7 @@ func CreatePostTable(db *sql.DB) {
 		id SERIAL PRIMARY KEY,
 		content TEXT NOT NULL,
 		user_id INTEGER REFERENCES users(id),
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	_, err := db.Exec(createTableSQL)

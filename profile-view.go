@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -158,11 +160,31 @@ func (m ProfileViewModel) View() string {
 	return doc
 }
 
+func RelativeTime(t time.Time) string {
+	now := time.Now()
+	duration := now.Sub(t)
+
+	switch {
+	case duration < 30*time.Second:
+		return "just now"
+	case duration < time.Minute:
+		return fmt.Sprintf("%.0fs ago", duration.Seconds())
+	case duration < time.Hour:
+		return fmt.Sprintf("%.0fm ago", duration.Minutes())
+	case duration < 24*time.Hour:
+		return fmt.Sprintf("%.0fh ago", duration.Hours())
+	case now.Year() == t.Year():
+		return t.Format("Jan 2")
+	default:
+		return t.Format("Jan 2, 2006")
+	}
+}
+
 func (m ProfileViewModel) postView(post Post) string {
 	doc := strings.Builder{}
 	doc.WriteString(m.headerStyle.Render(post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
-	doc.WriteString(m.quitStyle.Render(post.createdAt.Format("Jan 2, 2006")))
+	doc.WriteString(m.quitStyle.Render(RelativeTime(post.createdAt)))
 	doc.WriteString("\n")
 
 	doc.WriteString(post.content)
