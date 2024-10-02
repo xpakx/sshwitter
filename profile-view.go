@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -43,6 +41,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 	if err != nil {
 		log.Error(err)
 	}
+	timeline := getTimeline(renderer, db, posts, user)
 
 	info := getProfileInfo(renderer, db, owner)
 
@@ -65,7 +64,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 		owner: owner,
 		db: db,
 		info: info,
-		posts: posts,
+		posts: timeline,
 		user: user,
 		isOwner: isOwner,
 		text: textInput,
@@ -81,7 +80,7 @@ type ProfileViewModel struct {
 	headerStyle  lipgloss.Style
 	numberStyle  lipgloss.Style
 	info         ProfileInfoModel
-	posts        []Post
+	posts        TimelineModel
 	owner         SavedUser
 	user         SavedUser
 	db           *sql.DB
@@ -101,6 +100,8 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
+		m.posts.width = max(m.width - (m.infoWidth + 1), 20)
+		return m, nil
 	case tea.KeyMsg:
 		if m.text.Focused() {
 			switch msg.String() {
@@ -144,9 +145,7 @@ func (m ProfileViewModel) View() string {
 	if m.inputOpened {
 		posts = append(posts, m.text.View() + "\n")
 	}
-	for _, post := range m.posts {
-		posts = append(posts, m.postView(post))
-	}
+	posts = append(posts, m.posts.View())
 	renderedPosts := lipgloss.JoinVertical(lipgloss.Top, posts...)
 	
 	postList := m.postStyle.
@@ -158,26 +157,6 @@ func (m ProfileViewModel) View() string {
 		postList,
 	)
 	return doc
-}
-
-func RelativeTime(t time.Time) string {
-	now := time.Now()
-	duration := now.Sub(t)
-
-	switch {
-	case duration < 30*time.Second:
-		return "just now"
-	case duration < time.Minute:
-		return fmt.Sprintf("%.0fs ago", duration.Seconds())
-	case duration < time.Hour:
-		return fmt.Sprintf("%.0fm ago", duration.Minutes())
-	case duration < 24*time.Hour:
-		return fmt.Sprintf("%.0fh ago", duration.Hours())
-	case now.Year() == t.Year():
-		return t.Format("Jan 2")
-	default:
-		return t.Format("Jan 2, 2006")
-	}
 }
 
 func (m ProfileViewModel) postView(post Post) string {
