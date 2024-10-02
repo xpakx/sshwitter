@@ -35,9 +35,12 @@ func CreatePostTable(db *sql.DB) {
 
 func SavePost(db *sql.DB, user SavedUser, content string) (int64, error) {
 	log.Info("Saving post to db")
+	var id int64
 	query := `INSERT INTO posts (content, user_id)
-			  VALUES ($1, $2)`
-	result, err := db.Exec(query, content, user.id)
+        VALUES ($1, $2)
+	RETURNING id`
+	err := db.QueryRow(query, content, user.id).
+		Scan(&id)
 
 	if err != nil {
 		log.Errorf("failed to insert post: %v", err)
@@ -45,11 +48,6 @@ func SavePost(db *sql.DB, user SavedUser, content string) (int64, error) {
 	}
 
 	log.Info("Saved new post")
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("failed to retrieve last inserted ID: %v", err)
-	}
-
 	return id, nil
 }
 
