@@ -64,6 +64,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 		numberStyle: numberStyle,
 		owner: owner,
 		db: db,
+		renderer: renderer,
 		info: info,
 		posts: timeline,
 		user: user,
@@ -82,9 +83,10 @@ type ProfileViewModel struct {
 	numberStyle  lipgloss.Style
 	info         ProfileInfoModel
 	posts        TimelineModel
-	owner         SavedUser
+	owner        SavedUser
 	user         SavedUser
 	db           *sql.DB
+	renderer     *lipgloss.Renderer
 	width        int
 	infoWidth    int
 	isOwner      bool
@@ -142,6 +144,13 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.inputOpened = true
 					return m, m.text.Focus()
 				}
+			case "r":
+				posts, err := FindUserPosts(m.db, m.owner)
+				if err != nil {
+					log.Error(err)
+				}
+				m.posts = getTimeline(m.renderer, m.db, posts, m.user)
+				return m, nil
 			}
 		}
 	}
