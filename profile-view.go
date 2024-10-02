@@ -118,6 +118,7 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.text.Blur()
 				m.inputOpened = false
 				text := m.text.Value()
+				m.text.Reset()
 				if (text == "") { // TODO
 					return m, nil
 				}
