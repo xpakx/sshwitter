@@ -99,11 +99,13 @@ func (m ProfileViewModel) Init() tea.Cmd {
 }
 
 
+
+
 func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
-		m.posts.width = max(m.width - (m.infoWidth + 1), 20)
+		m.posts.width = max(m.width - (m.infoWidth + 1), 20) - 2
 		return m, nil
 	case tea.KeyMsg:
 		if m.text.Focused() {
