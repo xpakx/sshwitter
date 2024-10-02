@@ -118,3 +118,8 @@ func (m TimelineModel) postView(post Post) string {
 	doc.WriteString("\n")
 	return doc.String()
 }
+
+
+func (m *TimelineModel) Push(post Post) {
+	m.posts = append([]Post{post}, m.posts...)
+}

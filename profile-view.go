@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -116,7 +117,18 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if (text == "") { // TODO
 					return m, nil
 				}
-				SavePost(m.db, m.user, text) // TODO: extract to command
+				id, err := SavePost(m.db, m.user, text) // TODO: extract to commad
+				if err == nil {
+					m.posts.Push(Post {
+						id: id, 
+						userId: m.user.id, 
+						content: text, 
+						username: m.user.username, 
+						createdAt: time.Now(),
+					})
+				} else {
+					log.Error(err)
+				}
 				return m, nil
 			default:
 				var cmd tea.Cmd
