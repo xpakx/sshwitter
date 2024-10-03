@@ -168,6 +168,7 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Error(err)
 				}
 				m.posts = getTimeline(m.renderer, m.db, posts, m.user)
+				m.viewport.SetContent(m.posts.View())
 				return m, nil
 			}
 			var cmd tea.Cmd
