@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/bubbles/viewport"
 )
 
 func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, user SavedUser) (ProfileViewModel) {
@@ -55,6 +56,9 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 	textInput.FocusedStyle.CursorLine = lipgloss.NewStyle()
 	textInput.ShowLineNumbers = false
 
+
+	newViewport := viewport.New(20, 15)
+
 	return ProfileViewModel{ 
 		infoStyle: infoStyle, 
 		quitStyle: quitStyle,
@@ -71,6 +75,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 		isOwner: isOwner,
 		text: textInput,
 		inputOpened: false,
+		viewport: newViewport,
 	}
 }
 
@@ -92,6 +97,7 @@ type ProfileViewModel struct {
 	isOwner      bool
 	text         textarea.Model
 	inputOpened  bool
+	viewport     viewport.Model
 }
 
 func (m ProfileViewModel) Init() tea.Cmd {
@@ -106,6 +112,9 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
 		m.posts.width = max(m.width - (m.infoWidth + 1), 20) - 2
+		m.viewport.Width = m.posts.width
+		m.viewport.Height = msg.Height - 5
+		m.viewport.SetContent(m.posts.View())
 		return m, nil
 	case tea.KeyMsg:
 		if m.text.Focused() {
@@ -113,10 +122,12 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc":
 				m.text.Blur()
 				m.inputOpened = false
+				m.viewport.Height = m.viewport.Height + 4
 				return m, nil
 			case "enter":
 				m.text.Blur()
 				m.inputOpened = false
+				m.viewport.Height = m.viewport.Height + 4
 				text := m.text.Value()
 				m.text.Reset()
 				if (text == "") { // TODO
@@ -131,9 +142,12 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						username: m.user.username, 
 						createdAt: time.Now(),
 					})
+					m.viewport.SetContent(m.posts.View())
+					m.viewport.GotoTop()
 				} else {
 					log.Error(err)
 				}
+
 				return m, nil
 			default:
 				var cmd tea.Cmd
@@ -145,6 +159,7 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "p":
 				if m.isOwner {
 					m.inputOpened = true
+					m.viewport.Height = m.viewport.Height - 4
 					return m, m.text.Focus()
 				}
 			case "r":
@@ -155,6 +170,9 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.posts = getTimeline(m.renderer, m.db, posts, m.user)
 				return m, nil
 			}
+			var cmd tea.Cmd
+			m.viewport, cmd = m.viewport.Update(msg)
+			return m, cmd
 		}
 	}
 	return m, nil
@@ -169,7 +187,7 @@ func (m ProfileViewModel) View() string {
 	if m.inputOpened {
 		posts = append(posts, m.text.View() + "\n")
 	}
-	posts = append(posts, m.posts.View())
+	posts = append(posts, m.viewport.View())
 	renderedPosts := lipgloss.JoinVertical(lipgloss.Top, posts...)
 	
 	postList := m.postStyle.
@@ -181,24 +199,6 @@ func (m ProfileViewModel) View() string {
 		postList,
 	)
 	return doc
-}
-
-func (m ProfileViewModel) postView(post Post) string {
-	doc := strings.Builder{}
-	doc.WriteString(m.headerStyle.Render(post.username))
-	doc.WriteString(m.quitStyle.Render(" · "))
-	doc.WriteString(m.quitStyle.Render(RelativeTime(post.createdAt)))
-	doc.WriteString("\n")
-
-	doc.WriteString(post.content)
-	doc.WriteString("\n")
-	doc.WriteString(m.numberStyle.Render("0"))
-	doc.WriteString(m.quitStyle.Render(" Likes"))
-	doc.WriteString("  ")
-	doc.WriteString(m.numberStyle.Render("0"))
-	doc.WriteString(m.quitStyle.Render(" Replies"))
-	doc.WriteString("\n")
-	return doc.String()
 }
 
 
