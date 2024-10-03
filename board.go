@@ -58,16 +58,9 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
-		case "alt+1":
-			m.currentTab = m.GetTab(0)
-		case "alt+2":
-			m.currentTab = m.GetTab(1)
-		case "alt+3":
-			m.currentTab = m.GetTab(2)
-		case "alt+4":
-			m.currentTab = m.GetTab(3)
-		case "alt+5":
-			m.currentTab = m.GetTab(4)
+		case "alt+1", "alt+2", "alt+3", "alt+4", "alt+5":
+			tabNumber := int(msg.String()[4] - '0')
+			m.currentTab = m.GetTab(tabNumber - 1) 
 		}
 	case tea.WindowSizeMsg:
 		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
