@@ -69,6 +69,12 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "alt+5":
 			m.currentTab = m.GetTab(4)
 		}
+	case tea.WindowSizeMsg:
+		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
+		for i := range m.tabs {
+			m.tabs[i], cmds[i] = m.tabs[i].Update(msg)
+		}
+		return m, tea.Batch(cmds...)
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab], cmd = m.tabs[m.currentTab].Update(msg)
