@@ -71,10 +71,67 @@ func SaveFollow(db *sql.DB, user SavedUser, followed SavedUser) (int64, error) {
 				return 0, fmt.Errorf("Already followed: %v", err)
 			}
 		}
-		log.Errorf("failed to insert post: %v", err)
+		log.Errorf("failed to insert follow: %v", err)
 		return 0, fmt.Errorf("failed to insert follow: %v", err)
 	}
 
 	log.Info("Saved new follow")
 	return id, nil
+}
+
+func CreateUnfollowFunction(db *sql.DB) {
+	query := `
+	CREATE OR REPLACE PROCEDURE delete_follow(user_id_param INTEGER, followed_id_param INTEGER)
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE 
+	        is_deleted INTEGER;
+	BEGIN
+		DELETE FROM follows 
+		WHERE user_id = user_id_param AND followed_id = followed_id_param;
+		GET DIAGNOSTICS is_deleted = ROW_COUNT;
+
+                IF is_deleted > 0 THEN
+			UPDATE users 
+			SET followers = CASE WHEN followers > 0 THEN followers - 1 ELSE followers END
+			WHERE id = followed_id_param;
+
+			UPDATE users 
+			SET followed = CASE WHEN followed > 0 THEN followed - 1 ELSE followed END
+			WHERE id = user_id_param;
+		ELSE
+		        RAISE EXCEPTION 'Not following' USING ERRCODE = 'P0001'; 
+		END IF;
+	END;
+	$$;`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create procedure for inserting follows: %v", err)
+	}
+
+	log.Info("Procedure created successfully!")
+}
+
+func DeleteFollow(db *sql.DB, user SavedUser, followed SavedUser) error {
+	log.Info("Saving follow to db")
+	var id int64
+	query := `CALL delete_follow($1, $2)`
+
+	err := db.QueryRow(query, user.id, followed.id).
+		Scan(&id)
+
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "P0001" {
+				log.Warnf("Not followed: %v", err)
+				return fmt.Errorf("Not followed: %v", err)
+			}
+		}
+		log.Errorf("failed to delete follow: %v", err)
+		return  fmt.Errorf("failed to delete follow: %v", err)
+	}
+
+	log.Info("Deleted follow")
+	return nil
 }

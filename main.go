@@ -53,6 +53,7 @@ func main() {
 	CreatePostTable(db)
 	CreateFollowTable(db)
 	CreateFollowFunction(db)
+	CreateUnfollowFunction(db)
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
