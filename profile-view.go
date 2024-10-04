@@ -41,7 +41,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 	}
 	isOwner := user.id == owner.id
 	follows := false;
-	if isOwner {
+	if !isOwner {
 		var err error;
 		follows, err = CheckFollow(db, user, owner);
 		if err != nil {
@@ -181,6 +181,27 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.posts = getTimeline(m.renderer, m.db, posts, m.user)
 				m.viewport.SetContent(m.posts.View())
 				return m, nil
+			case "f":
+				if m.isOwner {
+					return m, nil
+				}
+				if !m.info.isFollowed {
+					err := SaveFollow(m.db, m.user, m.owner)
+					if err == nil {
+						m.info.isFollowed = true
+						m.owner.followers += 1
+						m.info.user.followers += 1
+					}
+					return m, nil
+				} else {
+					err := DeleteFollow(m.db, m.user, m.owner)
+					if err == nil {
+						m.info.isFollowed = false
+						m.owner.followers -= 1
+						m.info.user.followers -= 1
+					}
+					return m, nil
+				}
 			}
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)
