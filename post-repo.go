@@ -12,6 +12,7 @@ type Post struct {
 	id              int64
 	userId          int64
 	content         string
+	likes           int
 	username        string
 	createdAt       time.Time
 }
@@ -22,6 +23,7 @@ func CreatePostTable(db *sql.DB) {
 		id SERIAL PRIMARY KEY,
 		content TEXT NOT NULL,
 		user_id INTEGER REFERENCES users(id),
+		likes INTEGER DEFAULT 0,
 		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);`
 
@@ -80,7 +82,7 @@ func DeletePost(db *sql.DB, post Post, user SavedUser) error {
 
 func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes
 	FROM posts p
 	LEFT JOIN users u
 	ON p.user_id = u.id
@@ -95,7 +97,7 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
@@ -110,7 +112,7 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 
 func FindAllPosts(db *sql.DB) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes
 	FROM posts p
 	LEFT JOIN users u
 	ON p.user_id = u.id
@@ -124,7 +126,7 @@ func FindAllPosts(db *sql.DB) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)

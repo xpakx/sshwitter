@@ -33,3 +33,45 @@ func CreateLikeTable(db *sql.DB) {
 
 	log.Info("Table 'likes' created successfully!")
 }
+
+func CreateLikeFunction(db *sql.DB) {
+	query := `
+	CREATE OR REPLACE PROCEDURE add_like(user_id_param INTEGER, post_id_param INTEGER)
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+		INSERT INTO likes (user_id, post_id) 
+		VALUES (user_id_param, post_id_param);
+
+		UPDATE posts SET likes = likes + 1 WHERE id = post_id_param;
+	END;
+	$$;`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create procedure for inserting likes: %v", err)
+	}
+
+	log.Info("Procedure created successfully!")
+}
+
+func SaveLike(db *sql.DB, user SavedUser, post Post) error {
+	log.Info("Saving like to db")
+	query := `CALL add_like($1, $2)`
+
+	_, err := db.Exec(query, user.id, post.id)
+
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				log.Warnf("Already liked: %v", err)
+				return fmt.Errorf("Already liked: %v", err)
+			}
+		}
+		log.Errorf("failed to insert like: %v", err)
+		return fmt.Errorf("failed to insert like: %v", err)
+	}
+
+	log.Info("Saved new like")
+	return nil
+}
