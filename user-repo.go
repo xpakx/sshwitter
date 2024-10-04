@@ -108,7 +108,9 @@ func CreateUserTable(db *sql.DB) {
 		username VARCHAR(50) UNIQUE NOT NULL,
 		email VARCHAR(100) NOT NULL,
 		verified BOOLEAN NOT NULL,
-		administrator BOOLEAN NOT NULL
+		administrator BOOLEAN NOT NULL,
+		followers INTEGER DEFAULT 0,
+		followed INTEGER DEFAULT 0
 	);`
 
 	_, err := db.Exec(createTableSQL)

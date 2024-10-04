@@ -34,12 +34,32 @@ func CreateFollowTable(db *sql.DB) {
 	log.Info("Table 'follows' created successfully!")
 }
 
+func CreateFollowFunction(db *sql.DB) {
+	query := `
+	CREATE OR REPLACE PROCEDURE add_follow(user_id_param INTEGER, followed_id_param INTEGER)
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+		INSERT INTO follows (user_id, followed_id) 
+		VALUES (user_id_param, followed_id_param);
+
+		UPDATE users SET followers = followers + 1 WHERE id = followed_id_param;
+		UPDATE users SET followed = followed + 1 WHERE id = user_id_param;
+	END;
+	$$;`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create procedure for inserting follows: %v", err)
+	}
+
+	log.Info("Procedure created successfully!")
+}
+
 func SaveFollow(db *sql.DB, user SavedUser, followed SavedUser) (int64, error) {
 	log.Info("Saving follow to db")
 	var id int64
-	query := `INSERT INTO follows (user_id, followed_id)
-        VALUES ($1, $2)
-	RETURNING id`
+	query := `CALL add_follow($1, $2)`
 
 	err := db.QueryRow(query, user.id, followed.id).
 		Scan(&id)
