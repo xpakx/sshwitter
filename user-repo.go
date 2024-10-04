@@ -13,6 +13,8 @@ type SavedUser struct {
 	administrator   bool
 	email           string
 	username        string
+	followers       int
+	followed        int
 	id              int64
 }
 
@@ -84,9 +86,9 @@ func DeleteUser(db *sql.DB, user SavedUser) error {
 func GetUserByUsername(db *sql.DB, username string) (SavedUser, bool) {
 	var user SavedUser
 	log.Debug("Fetching user from db")
-	query := `SELECT id, key, username, email, verified, administrator FROM users WHERE username = $1`
+	query := `SELECT id, key, username, email, verified, administrator, followers, followed FROM users WHERE username = $1`
 	err := db.QueryRow(query, username).
-		Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator)
+		Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator, &user.followers, &user.followed)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -131,7 +133,7 @@ func findQuery(db *sql.DB, query string) ([]SavedUser, error) {
 	var users []SavedUser
 	for rows.Next() {
 		var user SavedUser
-		if err := rows.Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator); err != nil {
+		if err := rows.Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator, &user.followers, &user.followed); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -145,11 +147,11 @@ func findQuery(db *sql.DB, query string) ([]SavedUser, error) {
 }
 
 func GetAllUsers(db *sql.DB) ([]SavedUser, error) {
-	query := `SELECT id, key, username, email, verified, administrator FROM users`
+	query := `SELECT id, key, username, email, verified, administrator, followers, followed FROM users`
 	return findQuery(db, query)
 }
 
 func GetUnverifiedUsers(db *sql.DB) ([]SavedUser, error) {
-	query := `SELECT id, key, username, email, verified, administrator FROM users WHERE verified = false`
+	query := `SELECT id, key, username, email, verified, administrator, followers, followed FROM users WHERE verified = false`
 	return findQuery(db, query)
 }

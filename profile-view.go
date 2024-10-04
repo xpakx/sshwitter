@@ -2,14 +2,15 @@ package main
 
 import (
 	"database/sql"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/charmbracelet/bubbles/viewport"
 )
 
 func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, user SavedUser) (ProfileViewModel) {
@@ -257,10 +258,10 @@ func (m ProfileInfoModel) View() string {
 	joinDate := m.quitStyle.Render("Date")  
 	doc.WriteString(joinDate)
 	doc.WriteString("\n")
-	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.numberStyle.Render(strconv.Itoa(m.user.followed)))
 	doc.WriteString(m.quitStyle.Render(" Following"))
 	doc.WriteString("\n")
-	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.numberStyle.Render(strconv.Itoa(m.user.followers)))
 	doc.WriteString(m.quitStyle.Render(" Followers"))
 	return doc.String()
 }
