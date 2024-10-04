@@ -40,13 +40,23 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 		// TODO: 404 page
 	}
 	isOwner := user.id == owner.id
+	follows := false;
+	if isOwner {
+		var err error;
+		follows, err = CheckFollow(db, user, owner);
+		if err != nil {
+			log.Error("Error while checking following.")
+		}
+	} 
+
+
 	posts, err := FindUserPosts(db, owner)
 	if err != nil {
 		log.Error(err)
 	}
 	timeline := getTimeline(renderer, db, posts, user)
 
-	info := getProfileInfo(renderer, db, owner)
+	info := getProfileInfo(renderer, db, owner, follows)
 
 	textInput := textarea.New()
 	textInput.Placeholder = "Type a message..."
@@ -204,7 +214,7 @@ func (m ProfileViewModel) View() string {
 }
 
 
-func getProfileInfo(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (ProfileInfoModel) {
+func getProfileInfo(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser, isFollowed bool) (ProfileInfoModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	headerStyle := renderer.NewStyle().
@@ -218,6 +228,7 @@ func getProfileInfo(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Pr
 		quitStyle: quitStyle,
 		headerStyle: headerStyle,
 		numberStyle: numberStyle,
+		isFollowed: isFollowed,
 		user: user,
 		db: db,
 	}
@@ -229,6 +240,7 @@ type ProfileInfoModel struct {
 	quitStyle    lipgloss.Style
 	headerStyle  lipgloss.Style
 	numberStyle  lipgloss.Style
+	isFollowed   bool
 	user         SavedUser
 	db           *sql.DB
 }
@@ -249,6 +261,9 @@ func (m ProfileInfoModel) View() string {
 	doc.WriteString("\n")
 	description := m.txtStyle.Render("description")  
 	doc.WriteString(description)
+	if m.isFollowed {
+		doc.WriteString("\n[Followed]")
+	}
 	doc.WriteString("\n\n")
 	doc.WriteString("📍 " )
 	location := m.quitStyle.Render("City")  

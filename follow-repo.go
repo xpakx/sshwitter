@@ -135,3 +135,21 @@ func DeleteFollow(db *sql.DB, user SavedUser, followed SavedUser) error {
 	log.Info("Deleted follow")
 	return nil
 }
+
+func CheckFollow(db *sql.DB, user SavedUser, other SavedUser) (bool, error) {
+	var exists bool;
+	query := `
+	SELECT EXISTS (
+	    SELECT 1 FROM follows WHERE user_id = $1 AND followed_id = $2
+	);`
+
+	err := db.QueryRow(query, user.id, other.id).
+		Scan(&exists)
+
+	if err != nil {
+		log.Errorf("Error while fetching follows: %v", err)
+		return  false, fmt.Errorf("Error while fetching follows: %v", err)
+	}
+
+	return exists, nil
+}
