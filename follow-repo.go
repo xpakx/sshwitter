@@ -56,27 +56,25 @@ func CreateFollowFunction(db *sql.DB) {
 	log.Info("Procedure created successfully!")
 }
 
-func SaveFollow(db *sql.DB, user SavedUser, followed SavedUser) (int64, error) {
+func SaveFollow(db *sql.DB, user SavedUser, followed SavedUser) error {
 	log.Info("Saving follow to db")
-	var id int64
 	query := `CALL add_follow($1, $2)`
 
-	err := db.QueryRow(query, user.id, followed.id).
-		Scan(&id)
+	_, err := db.Exec(query, user.id, followed.id)
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			if pqErr.Code == "23505" {
 				log.Warnf("Already followed: %v", err)
-				return 0, fmt.Errorf("Already followed: %v", err)
+				return fmt.Errorf("Already followed: %v", err)
 			}
 		}
 		log.Errorf("failed to insert follow: %v", err)
-		return 0, fmt.Errorf("failed to insert follow: %v", err)
+		return fmt.Errorf("failed to insert follow: %v", err)
 	}
 
 	log.Info("Saved new follow")
-	return id, nil
+	return nil
 }
 
 func CreateUnfollowFunction(db *sql.DB) {
@@ -114,12 +112,10 @@ func CreateUnfollowFunction(db *sql.DB) {
 }
 
 func DeleteFollow(db *sql.DB, user SavedUser, followed SavedUser) error {
-	log.Info("Saving follow to db")
-	var id int64
+	log.Info("Deleting follow in db")
 	query := `CALL delete_follow($1, $2)`
 
-	err := db.QueryRow(query, user.id, followed.id).
-		Scan(&id)
+	_, err := db.Exec(query, user.id, followed.id)
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
