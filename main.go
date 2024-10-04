@@ -56,6 +56,7 @@ func main() {
 	CreateUnfollowFunction(db)
 	CreateLikeTable(db)
 	CreateLikeFunction(db)
+	CreateUnlikeFunction(db)
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
