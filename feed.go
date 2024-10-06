@@ -32,7 +32,7 @@ func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (FeedM
 	numberStyle := quitStyle.
 		Bold(true)
 
-	posts, err := FindAllPosts(db)
+	posts, err := FindAllPosts(db, user)
 	if err != nil {
 		log.Error(err)
 	}
@@ -140,7 +140,7 @@ func (m FeedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.viewport.Height = m.viewport.Height - 4
 				return m, m.text.Focus()
 			case "r":
-				posts, err := FindAllPosts(m.db)
+				posts, err := FindAllPosts(m.db, m.user)
 				if err != nil {
 					log.Error(err)
 				}

@@ -15,6 +15,7 @@ type Post struct {
 	likes           int
 	username        string
 	createdAt       time.Time
+	liked           bool
 }
 
 func CreatePostTable(db *sql.DB) {
@@ -80,15 +81,17 @@ func DeletePost(db *sql.DB, post Post, user SavedUser) error {
 	return nil
 }
 
-func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
+func FindUserPosts(db *sql.DB, user SavedUser, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, 
+	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
+	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $2
 	LEFT JOIN users u
 	ON p.user_id = u.id
 	WHERE p.user_id = $1
 	ORDER BY p.created_at DESC`
-	rows, err := db.Query(query, user.id)
+	rows, err := db.Query(query, user.id, viewer.id)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +100,7 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
@@ -110,14 +113,16 @@ func FindUserPosts(db *sql.DB, user SavedUser) ([]Post, error) {
 	return posts, nil
 }
 
-func FindAllPosts(db *sql.DB) ([]Post, error) {
+func FindAllPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
+	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
 	LEFT JOIN users u
 	ON p.user_id = u.id
 	ORDER BY p.created_at DESC`
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, viewer.id)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +131,7 @@ func FindAllPosts(db *sql.DB) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)

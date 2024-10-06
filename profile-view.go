@@ -50,7 +50,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 	} 
 
 
-	posts, err := FindUserPosts(db, owner)
+	posts, err := FindUserPosts(db, owner, user)
 	if err != nil {
 		log.Error(err)
 	}
@@ -174,7 +174,7 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, m.text.Focus()
 				}
 			case "r":
-				posts, err := FindUserPosts(m.db, m.owner)
+				posts, err := FindUserPosts(m.db, m.owner, m.user)
 				if err != nil {
 					log.Error(err)
 				}
