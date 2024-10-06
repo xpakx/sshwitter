@@ -143,3 +143,35 @@ func FindAllPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 
 	return posts, nil
 }
+
+func FindFollowedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
+	query := `
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
+	FROM posts p
+	INNER JOIN follows f ON f.followed_id = p.user_id AND f.user_id = $1
+	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
+	LEFT JOIN users u ON p.user_id = u.id
+	WHERE f.user_id = $1
+	ORDER BY p.created_at DESC`
+	rows, err := db.Query(query, viewer.id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
