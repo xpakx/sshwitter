@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -110,7 +111,10 @@ func (m TimelineModel) postView(post Post) string {
 
 	doc.WriteString(post.content)
 	doc.WriteString("\n")
-	doc.WriteString(m.numberStyle.Render("0"))
+	if (post.liked) {
+		doc.WriteString(m.quitStyle.Render("❤ "))
+	}
+	doc.WriteString(m.numberStyle.Render(strconv.Itoa(post.likes)))
 	doc.WriteString(m.quitStyle.Render(" Likes"))
 	doc.WriteString("  ")
 	doc.WriteString(m.numberStyle.Render("0"))
