@@ -202,6 +202,23 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					return m, nil
 				}
+			case "k", "j":
+				m.posts, m.viewport = UpdateTimeline(m.posts, m.viewport, msg)
+				return m, nil
+			case "l":
+				var err error
+				post := m.posts.posts[m.posts.currentPost]
+				if post.liked {
+					err = DeleteLike(m.db, m.user, post)
+				} else {
+					err = SaveLike(m.db, m.user, post)
+				}
+				
+				if err == nil {
+					m.posts.posts[m.posts.currentPost].liked = !post.liked
+					m.viewport.SetContent(m.posts.View())
+				}
+				return m, nil
 			}
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)
