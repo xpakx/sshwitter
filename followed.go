@@ -83,7 +83,7 @@ func (m FollowedFeedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "r":
-			posts, err := FindAllPosts(m.db, m.user)
+			posts, err := FindFollowedPosts(m.db, m.user)
 			if err != nil {
 				log.Error(err)
 			}
