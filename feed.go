@@ -147,6 +147,21 @@ func (m FeedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.posts = getTimeline(m.renderer, m.db, posts, m.user)
 				m.viewport.SetContent(m.posts.View())
 				return m, nil
+			case "k", "j":
+				m.posts, _ = m.posts.Update(msg)
+				if len(m.posts.posts) == 0 {
+					return m, nil
+				}
+				start := m.viewport.YOffset
+				end := start + m.viewport.Height
+				curr := m.posts.indices[m.posts.currentPost]
+				currStart := curr.start
+				currEnd := curr.start + curr.len
+				if currStart < start || currEnd > end {
+					m.viewport.SetYOffset(currStart)
+				}
+				m.viewport.SetContent(m.posts.View())
+				return m, nil
 			}
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)

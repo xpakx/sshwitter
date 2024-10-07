@@ -40,6 +40,7 @@ func getTimeline(renderer *lipgloss.Renderer, db *sql.DB, posts []Post, user Sav
 		db: db,
 		posts: posts,
 		user: user,
+		currentPost: 0,
 	}
 }
 
@@ -50,9 +51,16 @@ type TimelineModel struct {
 	headerStyle  lipgloss.Style
 	numberStyle  lipgloss.Style
 	posts        []Post
+	indices      []PostIndice
 	user         SavedUser
 	db           *sql.DB
 	width        int
+	currentPost  int
+}
+
+type PostIndice struct {
+	start int
+	len   int
 }
 
 func (m TimelineModel) Init() tea.Cmd {
@@ -60,18 +68,33 @@ func (m TimelineModel) Init() tea.Cmd {
 }
 
 
-func (m TimelineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m TimelineModel) Update(msg tea.Msg) (TimelineModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "j", "down": 
+			m.currentPost = min(m.currentPost + 1, len(m.posts)-1);
+			return m, nil
+		case "k", "up": 
+			m.currentPost = max(m.currentPost - 1, 0);
+			return m, nil
+		}
 	}
 	return m, nil
 }
 
-func (m TimelineModel) View() string {
+func (m *TimelineModel) View() string {
 	posts := make([]string, 0)
-	for _, post := range m.posts {
-		posts = append(posts, m.postView(post))
+	start := 0
+	m.indices = make([]PostIndice, len(m.posts))
+	for i, post := range m.posts {
+		postView := m.postView(post, m.currentPost == i)
+		posts = append(posts, postView)
+		m.indices[i].start = start
+		m.indices[i].len = strings.Count(postView, "\n") + 1
+		start += m.indices[i].len
 	}
 	renderedPosts := lipgloss.JoinVertical(lipgloss.Top, posts...)
 	
@@ -102,11 +125,14 @@ func RelativeTime(t time.Time) string {
 	}
 }
 
-func (m TimelineModel) postView(post Post) string {
+func (m TimelineModel) postView(post Post, current bool) string {
 	doc := strings.Builder{}
 	doc.WriteString(m.headerStyle.Render(post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
 	doc.WriteString(m.quitStyle.Render(RelativeTime(post.createdAt)))
+	if current {
+		doc.WriteString(m.quitStyle.Render(" !"))
+	}
 	doc.WriteString("\n")
 
 	doc.WriteString(post.content)
