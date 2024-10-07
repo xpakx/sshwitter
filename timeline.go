@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -152,4 +153,21 @@ func (m TimelineModel) postView(post Post, current bool) string {
 
 func (m *TimelineModel) Push(post Post) {
 	m.posts = append([]Post{post}, m.posts...)
+}
+
+func UpdateTimeline(posts TimelineModel, viewport viewport.Model, msg tea.KeyMsg) (TimelineModel, viewport.Model) {
+	posts, _ = posts.Update(msg)
+	if len(posts.posts) == 0 {
+		return posts, viewport
+	}
+	start := viewport.YOffset
+	end := start + viewport.Height
+	curr := posts.indices[posts.currentPost]
+	currStart := curr.start
+	currEnd := curr.start + curr.len
+	if currStart < start || currEnd > end {
+		viewport.SetYOffset(currStart)
+	}
+	viewport.SetContent(posts.View())
+	return posts, viewport
 }
