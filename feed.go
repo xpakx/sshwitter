@@ -11,7 +11,9 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 )
 
-func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (FeedModel) {
+type FindPostsFunc func(db *sql.DB, viewer SavedUser) ([]Post, error)
+
+func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser, find FindPostsFunc) (FeedModel) {
 	infoWidth := 20
 	infoStyle := renderer.NewStyle().
 		MaxWidth(infoWidth).
@@ -32,7 +34,7 @@ func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (FeedM
 	numberStyle := quitStyle.
 		Bold(true)
 
-	posts, err := FindAllPosts(db, user)
+	posts, err := find(db, user)
 	if err != nil {
 		log.Error(err)
 	}
@@ -62,6 +64,7 @@ func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (FeedM
 		text: textInput,
 		inputOpened: false,
 		viewport: newViewport,
+		find: find,
 	}
 }
 
@@ -80,6 +83,7 @@ type FeedModel struct {
 	text         textarea.Model
 	inputOpened  bool
 	viewport     viewport.Model
+	find         FindPostsFunc
 }
 
 func (m FeedModel) Init() tea.Cmd {
@@ -140,7 +144,7 @@ func (m FeedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.viewport.Height = m.viewport.Height - 4
 				return m, m.text.Focus()
 			case "r":
-				posts, err := FindAllPosts(m.db, m.user)
+				posts, err := m.find(m.db, m.user)
 				if err != nil {
 					log.Error(err)
 				}
@@ -161,6 +165,11 @@ func (m FeedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				
 				if err == nil {
 					m.posts.posts[m.posts.currentPost].liked = !post.liked
+					if post.liked {
+						m.posts.posts[m.posts.currentPost].likes = post.likes - 1 
+					} else {
+						m.posts.posts[m.posts.currentPost].likes = post.likes + 1 
+					}
 					m.viewport.SetContent(m.posts.View())
 				}
 				return m, nil

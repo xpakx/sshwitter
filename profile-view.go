@@ -216,6 +216,11 @@ func (m ProfileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				
 				if err == nil {
 					m.posts.posts[m.posts.currentPost].liked = !post.liked
+					if post.liked {
+						m.posts.posts[m.posts.currentPost].likes = post.likes - 1 
+					} else {
+						m.posts.posts[m.posts.currentPost].likes = post.likes + 1 
+					}
 					m.viewport.SetContent(m.posts.View())
 				}
 				return m, nil

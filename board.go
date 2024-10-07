@@ -13,9 +13,9 @@ func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Boa
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
 
 	tabs := []tea.Model{ }
-	tabs = append(tabs, getFeedView(renderer, db, user))
-	tabs = append(tabs, getFollowedFeedView(renderer, db, user))
-	tabs = append(tabs, getLikedFeedView(renderer, db, user))
+	tabs = append(tabs, getFeedView(renderer, db, user, FindAllPosts))
+	tabs = append(tabs, getFeedView(renderer, db, user, FindFollowedPosts))
+	tabs = append(tabs, getFeedView(renderer, db, user, FindLikedPosts))
 	tabs = append(tabs, getProfileView(renderer, db, user.username, user))
 
 
