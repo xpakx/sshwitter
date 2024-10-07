@@ -183,7 +183,7 @@ func FindLikedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
 	LEFT JOIN users u ON p.user_id = u.id
-	WHERE u.id = $1 AND l.user_id IS NOT NULL
+	WHERE l.user_id IS NOT NULL
 	ORDER BY p.created_at DESC`
 	rows, err := db.Query(query, viewer.id)
 	if err != nil {
