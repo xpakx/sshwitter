@@ -7,15 +7,20 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type Tab struct {
+    tea.Model
+    Name      string
+}
+
 func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (BoardModel) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	usernameStyle := renderer.NewStyle().Foreground(lipgloss.Color("5"))
 
-	tabs := []tea.Model{ }
-	tabs = append(tabs, getFeedView(renderer, db, user, FindAllPosts))
-	tabs = append(tabs, getFeedView(renderer, db, user, FindFollowedPosts))
-	tabs = append(tabs, getFeedView(renderer, db, user, FindLikedPosts))
+	tabs := []Tab{ }
+	tabs = append(tabs, getFeedView(renderer, db, user, FindAllPosts, "Feed"))
+	tabs = append(tabs, getFeedView(renderer, db, user, FindFollowedPosts, "Follows"))
+	tabs = append(tabs, getFeedView(renderer, db, user, FindLikedPosts, "Likes"))
 	tabs = append(tabs, getProfileView(renderer, db, user.username, user))
 
 
@@ -23,6 +28,28 @@ func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Boa
 		tabs = append(tabs, getModeratorTab(renderer, db))
 	}
 
+	activeTabBorder := lipgloss.Border{
+		Top:         "─", Bottom:      " ", Left:        "│",
+		Right:       "│", TopLeft:     "╭", TopRight:    "╮",
+		BottomLeft:  "┘", BottomRight: "└",
+	}
+
+	tabBorder := lipgloss.Border{
+		Top:         "─", Bottom:      "─", Left:        "│",
+		Right:       "│", TopLeft:     "╭", TopRight:    "╮",
+		BottomLeft:  "┴", BottomRight: "┴",
+	}
+
+	tabStyle := lipgloss.NewStyle().
+		Border(tabBorder, true).
+		BorderForeground(lipgloss.Color("10")).
+		Foreground(lipgloss.Color("8")).
+		Padding(0, 1)
+
+	activeTabStyle := lipgloss.NewStyle().
+		Border(activeTabBorder, true).
+		BorderForeground(lipgloss.Color("10")).
+		Padding(0, 1)
 
 	return BoardModel{ 
 		name: "sshwitter", 
@@ -32,6 +59,8 @@ func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Boa
 		userStyle: usernameStyle,
 		currentTab: 0,
 		tabs: tabs,
+		tabStyle: tabStyle,
+		aTabStyle: activeTabStyle,
 	}
 }
 
@@ -41,8 +70,10 @@ type BoardModel struct {
 	txtStyle   lipgloss.Style
 	quitStyle  lipgloss.Style
 	userStyle  lipgloss.Style
+	tabStyle   lipgloss.Style
+	aTabStyle  lipgloss.Style
 	currentTab int
-	tabs       []tea.Model
+	tabs       []Tab
 }
 
 func (m BoardModel) Init() tea.Cmd {
@@ -67,26 +98,33 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
 		for i := range m.tabs {
-			m.tabs[i], cmds[i] = m.tabs[i].Update(msg)
+			m.tabs[i].Model, cmds[i] = m.tabs[i].Model.Update(msg)
 		}
 		return m, tea.Batch(cmds...)
 	}
 	if len(m.tabs) > 0 {
-		m.tabs[m.currentTab], cmd = m.tabs[m.currentTab].Update(msg)
+		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
 	}
 	return m, cmd
 }
 
 func (m BoardModel) View() string {
-	var tabs string
+	var currentTab string
 	if len(m.tabs) > 0 {
-		tabs = m.tabs[m.currentTab].View()
+		currentTab = m.tabs[m.currentTab].View()
 	}
-	return m.txtStyle.Render("Authorized!") + 
-		"\n" + 
-		"Hello, " + 
-		m.userStyle.Render(m.user.username) +
-		"\n\n" + 
-		tabs + "\n" +
-		m.quitStyle.Render("Press 'q' to quit\n")
+	info := m.quitStyle.Render("Press 'q' to quit\n")
+
+	var tabs []string = make([]string, len(m.tabs))
+	for i, tab := range m.tabs {
+		if i == m.currentTab {
+			tabs[i] = m.aTabStyle.Render(tab.Name)
+		} else {
+			tabs[i] = m.tabStyle.Render(tab.Name)
+		}
+		
+	}
+	row := lipgloss.JoinHorizontal(lipgloss.Left, tabs...)
+	row = lipgloss.JoinVertical(lipgloss.Top, row, currentTab, info)
+	return row
 }

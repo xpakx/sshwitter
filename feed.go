@@ -13,7 +13,7 @@ import (
 
 type FindPostsFunc func(db *sql.DB, viewer SavedUser) ([]Post, error)
 
-func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser, find FindPostsFunc) (FeedModel) {
+func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser, find FindPostsFunc, name string) (Tab) {
 	infoWidth := 20
 	infoStyle := renderer.NewStyle().
 		MaxWidth(infoWidth).
@@ -51,25 +51,29 @@ func getFeedView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser, find F
 
 	newViewport := viewport.New(20, 15)
 
-	return FeedModel{ 
-		infoStyle: infoStyle, 
-		quitStyle: quitStyle,
-		postStyle: postStyle,
-		headerStyle: headerStyle,
-		numberStyle: numberStyle,
-		db: db,
-		renderer: renderer,
-		posts: timeline,
-		user: user,
-		text: textInput,
-		inputOpened: false,
-		viewport: newViewport,
-		find: find,
+	return Tab {
+		Model: FeedModel{ 
+			infoStyle: infoStyle, 
+			quitStyle: quitStyle,
+			postStyle: postStyle,
+			headerStyle: headerStyle,
+			numberStyle: numberStyle,
+			db: db,
+			renderer: renderer,
+			posts: timeline,
+			user: user,
+			text: textInput,
+			inputOpened: false,
+			viewport: newViewport,
+			find: find,
+		},
+		Name: name,
 	}
 }
 
 
 type FeedModel struct {
+	Name         string
 	infoStyle    lipgloss.Style
 	quitStyle    lipgloss.Style
 	postStyle    lipgloss.Style

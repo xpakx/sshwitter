@@ -13,7 +13,7 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, user SavedUser) (ProfileViewModel) {
+func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, user SavedUser) (Tab) {
 	infoWidth := 20
 	infoStyle := renderer.NewStyle().
 		MaxWidth(infoWidth).
@@ -70,23 +70,26 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 
 	newViewport := viewport.New(20, 15)
 
-	return ProfileViewModel{ 
-		infoStyle: infoStyle, 
-		quitStyle: quitStyle,
-		postStyle: postStyle,
-		infoWidth: infoWidth,
-		headerStyle: headerStyle,
-		numberStyle: numberStyle,
-		owner: owner,
-		db: db,
-		renderer: renderer,
-		info: info,
-		posts: timeline,
-		user: user,
-		isOwner: isOwner,
-		text: textInput,
-		inputOpened: false,
-		viewport: newViewport,
+	return Tab{
+		Model: ProfileViewModel{ 
+			infoStyle: infoStyle, 
+			quitStyle: quitStyle,
+			postStyle: postStyle,
+			infoWidth: infoWidth,
+			headerStyle: headerStyle,
+			numberStyle: numberStyle,
+			owner: owner,
+			db: db,
+			renderer: renderer,
+			info: info,
+			posts: timeline,
+			user: user,
+			isOwner: isOwner,
+			text: textInput,
+			inputOpened: false,
+			viewport: newViewport,
+		},
+		Name: user.username,
 	}
 }
 

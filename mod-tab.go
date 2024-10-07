@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func getModeratorTab(renderer *lipgloss.Renderer, db *sql.DB) (ModeratorTabModel) {
+func getModeratorTab(renderer *lipgloss.Renderer, db *sql.DB) (Tab) {
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
 	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
 	unverifiedUsers, err :=  GetUnverifiedUsers(db)
@@ -43,15 +43,18 @@ func getModeratorTab(renderer *lipgloss.Renderer, db *sql.DB) (ModeratorTabModel
 	prefixStyle := renderer.NewStyle().
 			Foreground(lipgloss.Color("#1da1f2"))
 
-	return ModeratorTabModel{ 
-		txtStyle: txtStyle, 
-		quitStyle: quitStyle,
-		prefixStyle: prefixStyle,
-		viewName: "Waiting for verification",
-		users: unverifiedUsers,
-		current: 0,
-		db: db,
-		table: table,
+	return Tab{
+		Model: ModeratorTabModel{ 
+			txtStyle: txtStyle, 
+			quitStyle: quitStyle,
+			prefixStyle: prefixStyle,
+			viewName: "Waiting for verification",
+			users: unverifiedUsers,
+			current: 0,
+			db: db,
+			table: table,
+		},
+	Name: "Mod",
 	}
 }
 
