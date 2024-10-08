@@ -78,6 +78,7 @@ type BoardModel struct {
 	tabs       []Tab
 	renderer   *lipgloss.Renderer
 	db         *sql.DB
+	lastResize tea.WindowSizeMsg
 }
 
 func (m BoardModel) Init() tea.Cmd {
@@ -111,6 +112,7 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, openHome
 		}
 	case tea.WindowSizeMsg:
+		m.lastResize = msg
 		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
 		for i := range m.tabs {
 			m.tabs[i].Model, cmds[i] = m.tabs[i].Model.Update(msg)
@@ -130,6 +132,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tabs, 
 			getFeedView(m.renderer, m.db, m.user, msg.find, msg.name),
 		)
+		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
+		return m, cmd
 	case OpenHomeMsg:
 		for _, tab  := range m.tabs {
 			if tab.Name == m.user.username {
@@ -137,6 +141,7 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		m.tabs = append(m.tabs, getProfileView(m.renderer, m.db, m.user.username, m.user))
+		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
 		return m, nil
 	}
 	if len(m.tabs) > 0 {
