@@ -61,6 +61,8 @@ func getBoardModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Boa
 		tabs: tabs,
 		tabStyle: tabStyle,
 		aTabStyle: activeTabStyle,
+		renderer: renderer,
+		db: db,
 	}
 }
 
@@ -74,6 +76,8 @@ type BoardModel struct {
 	aTabStyle  lipgloss.Style
 	currentTab int
 	tabs       []Tab
+	renderer   *lipgloss.Renderer
+	db         *sql.DB
 }
 
 func (m BoardModel) Init() tea.Cmd {
@@ -96,6 +100,12 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentTab = m.GetTab(tabNumber - 1) 
 		case "alt+x":
 			return m, closeTab(m.currentTab)
+		case "alt+a":
+			return m, openFeed(allFeed)
+		case "alt+f":
+			return m, openFeed(followedFeed)
+		case "alt+l":
+			return m, openFeed(likedFeed)
 		}
 	case tea.WindowSizeMsg:
 		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
@@ -107,6 +117,16 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		i := msg.page
 		m.tabs = append(m.tabs[:i], m.tabs[i+1:]...)
 		return m, nil
+	case OpenFeedMsg:
+		for _, tab  := range m.tabs {
+			if tab.Name == msg.name {
+				return m, nil
+			}
+		}
+		m.tabs = append(
+			m.tabs, 
+			getFeedView(m.renderer, m.db, m.user, msg.find, msg.name),
+		)
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -139,8 +159,32 @@ type CloseTabMsg struct {
 	page int
 }
 
+type OpenFeedMsg struct {
+	name string
+	find FindPostsFunc
+}
+
 func closeTab(page int) tea.Cmd {
 	return func() tea.Msg {
 		return CloseTabMsg{page: page}
+	}
+}
+
+type FeedType int
+
+const (
+        allFeed = iota
+        followedFeed = iota
+        likedFeed = iota
+)
+
+func openFeed(feed FeedType) tea.Cmd {
+	return func() tea.Msg {
+		switch (feed) {
+			case allFeed: return OpenFeedMsg{name: "Feed", find: FindAllPosts};
+			case followedFeed: return OpenFeedMsg{name: "Follows", find: FindFollowedPosts};
+			case likedFeed: return OpenFeedMsg{name: "Likes", find: FindLikedPosts};
+			default: return OpenFeedMsg{name: "Feed", find: FindAllPosts};
+		}
 	}
 }
