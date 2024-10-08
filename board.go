@@ -110,6 +110,10 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, openFeed(likedFeed)
 		case "alt+H":
 			return m, openHome
+		case "alt+h", "alt+left":
+			return m, tabMove(left)
+		case "alt+;", "alt+right":
+			return m, tabMove(right)
 		}
 	case tea.WindowSizeMsg:
 		m.lastResize = msg
@@ -158,6 +162,14 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tabs = append(m.tabs, getProfileView(m.renderer, m.db, msg.username, m.user))
 		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
 		return m, nil
+	case TabMoveMsg:
+
+		if msg.dir == left {
+			m.currentTab = max(m.currentTab - 1, 0);
+		} else if msg.dir == right {
+			m.currentTab = min(m.currentTab + 1, len(m.tabs)-1);
+		}
+		return m, nil
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -204,9 +216,9 @@ func closeTab(page int) tea.Cmd {
 type FeedType int
 
 const (
-        allFeed = iota
-        followedFeed = iota
-        likedFeed = iota
+        allFeed FeedType = iota
+        followedFeed FeedType = iota
+        likedFeed FeedType = iota
 )
 
 func openFeed(feed FeedType) tea.Cmd {
@@ -234,5 +246,22 @@ type OpenProfileMsg struct {
 func openProfile(username string) tea.Cmd {
 	return func() tea.Msg {
 		return OpenProfileMsg{username: username}
+	}
+}
+
+type Direction int
+
+const (
+        left Direction = iota
+        right Direction = iota
+)
+
+type TabMoveMsg struct {
+	dir Direction
+}
+
+func tabMove(dir Direction) tea.Cmd {
+	return func() tea.Msg {
+		return TabMoveMsg{dir: dir}
 	}
 }
