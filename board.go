@@ -119,8 +119,14 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Batch(cmds...)
 	case CloseTabMsg:
+		if len(m.tabs) == 0 {
+			return m, nil
+		}
 		i := msg.page
 		m.tabs = append(m.tabs[:i], m.tabs[i+1:]...)
+		if i == len(m.tabs) && i != 0 {
+			m.currentTab = m.currentTab - 1
+		}
 		return m, nil
 	case OpenFeedMsg:
 		for _, tab  := range m.tabs {
