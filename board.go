@@ -98,6 +98,7 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "alt+1", "alt+2", "alt+3", "alt+4", "alt+5":
 			tabNumber := int(msg.String()[4] - '0')
 			m.currentTab = m.GetTab(tabNumber - 1) 
+			return m, nil
 		case "alt+x":
 			return m, closeTab(m.currentTab)
 		case "alt+a":
@@ -106,6 +107,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, openFeed(followedFeed)
 		case "alt+l":
 			return m, openFeed(likedFeed)
+		case "alt+H":
+			return m, openHome
 		}
 	case tea.WindowSizeMsg:
 		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
@@ -127,6 +130,14 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tabs, 
 			getFeedView(m.renderer, m.db, m.user, msg.find, msg.name),
 		)
+	case OpenHomeMsg:
+		for _, tab  := range m.tabs {
+			if tab.Name == m.user.username {
+				return m, nil
+			}
+		}
+		m.tabs = append(m.tabs, getProfileView(m.renderer, m.db, m.user.username, m.user))
+		return m, nil
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -187,4 +198,10 @@ func openFeed(feed FeedType) tea.Cmd {
 			default: return OpenFeedMsg{name: "Feed", find: FindAllPosts};
 		}
 	}
+}
+
+type OpenHomeMsg struct {}
+
+func openHome() tea.Msg {
+	return OpenHomeMsg{}
 }
