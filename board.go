@@ -94,6 +94,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "alt+1", "alt+2", "alt+3", "alt+4", "alt+5":
 			tabNumber := int(msg.String()[4] - '0')
 			m.currentTab = m.GetTab(tabNumber - 1) 
+		case "alt+x":
+			return m, closeTab(m.currentTab)
 		}
 	case tea.WindowSizeMsg:
 		var cmds []tea.Cmd = make([]tea.Cmd, len(m.tabs))
@@ -101,6 +103,10 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tabs[i].Model, cmds[i] = m.tabs[i].Model.Update(msg)
 		}
 		return m, tea.Batch(cmds...)
+	case CloseTabMsg:
+		i := msg.page
+		m.tabs = append(m.tabs[:i], m.tabs[i+1:]...)
+		return m, nil
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -127,4 +133,14 @@ func (m BoardModel) View() string {
 	row := lipgloss.JoinHorizontal(lipgloss.Left, tabs...)
 	row = lipgloss.JoinVertical(lipgloss.Top, row, currentTab, info)
 	return row
+}
+
+type CloseTabMsg struct {
+	page int
+}
+
+func closeTab(page int) tea.Cmd {
+	return func() tea.Msg {
+		return CloseTabMsg{page: page}
+	}
 }
