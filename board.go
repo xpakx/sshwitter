@@ -149,6 +149,15 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tabs = append(m.tabs, getProfileView(m.renderer, m.db, m.user.username, m.user))
 		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
 		return m, nil
+	case OpenProfileMsg:
+		for _, tab  := range m.tabs {
+			if tab.Name == msg.username {
+				return m, nil
+			}
+		}
+		m.tabs = append(m.tabs, getProfileView(m.renderer, m.db, msg.username, m.user))
+		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
+		return m, nil
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -215,4 +224,15 @@ type OpenHomeMsg struct {}
 
 func openHome() tea.Msg {
 	return OpenHomeMsg{}
+}
+
+
+type OpenProfileMsg struct {
+	username string
+}
+
+func openProfile(username string) tea.Cmd {
+	return func() tea.Msg {
+		return OpenProfileMsg{username: username}
+	}
 }

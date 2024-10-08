@@ -89,7 +89,7 @@ func getProfileView(renderer *lipgloss.Renderer, db *sql.DB, username string, us
 			inputOpened: false,
 			viewport: newViewport,
 		},
-		Name: user.username,
+		Name: username,
 	}
 }
 

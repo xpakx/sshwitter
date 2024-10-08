@@ -81,6 +81,12 @@ func (m TimelineModel) Update(msg tea.Msg) (TimelineModel, tea.Cmd) {
 		case "k", "up": 
 			m.currentPost = max(m.currentPost - 1, 0);
 			return m, nil
+		case "a":
+			if m.currentPost > len(m.posts) {
+				return m, nil
+			}
+			username := m.posts[m.currentPost].username
+			return m, openProfile(username)
 		}
 	}
 	return m, nil
