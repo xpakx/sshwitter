@@ -28,15 +28,26 @@ import (
 
 // TODO: move to yaml/env
 const (
-	host          = "localhost"
+	defaultHost          = "localhost"
 	port          = "23230"
 	validPassword = "password"
 	dev           = false
 )
 
+func GetEnvOrDefault(env string, def string) string {
+	result, defined := os.LookupEnv(env)
+	if defined {
+		return result
+	} else {
+		return def
+	}
+}
 
 func main() {
-	db, dbErr := openDB("postgresql://root:password@localhost:5432/sshwitter?sslmode=disable")
+	host := GetEnvOrDefault("HOST", defaultHost)
+	dbUrl := GetEnvOrDefault("DB",  "postgresql://root:password@localhost:5432/sshwitter?sslmode=disable")
+
+	db, dbErr := openDB(dbUrl)
 	if dbErr != nil {
 		log.Error(dbErr.Error())
 		return
