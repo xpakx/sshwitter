@@ -1,0 +1,30 @@
+version: '3.3'
+
+services:
+  main:
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    container_name: sshwitter_main
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 23230:23230
+    environment:
+      - HOST=main
+      - DB=postgresql://root:password@db:5432/sshwitter?sslmode=disable
+  db:
+    image: 'postgres:13.1-alpine'
+    container_name: sshwitter_db
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=sshwitter
+    expose:
+      - 5432
+    healthcheck:
+      test: ['CMD', 'psql', '-U', 'root', 'sshwitter', '-c', 'SELECT 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
