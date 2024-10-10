@@ -305,18 +305,26 @@ func (m ProfileInfoModel) View() string {
 	username := m.headerStyle.Render(m.user.username)  
 	doc.WriteString(username)
 	doc.WriteString("\n")
-	description := m.txtStyle.Render("description")  
+	desc := "description"
+	if m.user.description.Valid {
+		desc = m.user.description.String
+	}
+	description := m.txtStyle.Render(desc)  
 	doc.WriteString(description)
 	if m.isFollowed {
 		doc.WriteString("\n[Followed]")
 	}
 	doc.WriteString("\n\n")
 	doc.WriteString("📍 " )
-	location := m.quitStyle.Render("City")  
+	loc := ""
+	if m.user.location.Valid {
+		loc = m.user.location.String
+	}
+	location := m.quitStyle.Render(loc)  
 	doc.WriteString(location)
 	doc.WriteString("\n")
 	doc.WriteString("🗓  " )
-	joinDate := m.quitStyle.Render("Date")  
+	joinDate := m.quitStyle.Render(m.user.createdAt.Format("Jan 2, 2006"))  
 	doc.WriteString(joinDate)
 	doc.WriteString("\n")
 	doc.WriteString(m.numberStyle.Render(strconv.Itoa(m.user.followed)))
