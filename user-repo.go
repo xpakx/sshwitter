@@ -18,6 +18,9 @@ type SavedUser struct {
 	followed        int
 	id              int64
 	createdAt       time.Time
+	description     sql.NullString
+	location        sql.NullString
+	birthDate       time.Time
 }
 
 func SaveUser(db *sql.DB, publicKey string, username string, email string) (int64, error) {
@@ -88,9 +91,9 @@ func DeleteUser(db *sql.DB, user SavedUser) error {
 func GetUserByUsername(db *sql.DB, username string) (SavedUser, bool) {
 	var user SavedUser
 	log.Debug("Fetching user from db")
-	query := `SELECT id, key, username, email, verified, administrator, followers, followed, created_at FROM users WHERE username = $1`
+	query := `SELECT id, key, username, email, verified, administrator, followers, followed, created_at, description, location, birth_date FROM users WHERE username = $1`
 	err := db.QueryRow(query, username).
-		Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator, &user.followers, &user.followed, &user.createdAt)
+		Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator, &user.followers, &user.followed, &user.createdAt, &user.description, &user.location, &user.birthDate)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -115,7 +118,10 @@ func CreateUserTable(db *sql.DB) {
 		administrator BOOLEAN NOT NULL,
 		followers INTEGER DEFAULT 0,
 		followed INTEGER DEFAULT 0,
-		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		description VARCHAR(100),
+		location VARCHAR(50),
+		birth_date TIMESTAMP WITH TIME ZONE NOT NULL
 	);`
 
 	_, err := db.Exec(createTableSQL)
