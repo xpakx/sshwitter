@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -118,13 +119,20 @@ func (m RegisterModel) Register() {
 	view := m.pages[0]
 	var username string
 	var email string
+	var birthDate time.Time
 	if v, ok := view.(RegisterOneModel); ok {
 		username = v.nameInput.Input.Value()
 		email = v.emailInput.Input.Value()
+		date := v.birthInput.Input.Value()
+		var err error
+		birthDate, err = time.Parse("2006-01-02", date)
+		if err != nil {
+			return
+		}
 	} else {
 		return 
 	}
-	SaveUser(m.db, m.publicKey, username, email)
+	SaveUser(m.db, m.publicKey, username, email, birthDate)
 }
 
 func (m RegisterModel) UpdatePageThree()  {

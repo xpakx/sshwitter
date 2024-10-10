@@ -23,11 +23,11 @@ type SavedUser struct {
 	birthDate       time.Time
 }
 
-func SaveUser(db *sql.DB, publicKey string, username string, email string) (int64, error) {
+func SaveUser(db *sql.DB, publicKey string, username string, email string, birthDate time.Time) (int64, error) {
 	log.Info("Saving user to db")
-	query := `INSERT INTO users (key, username, email, verified, administrator)
-			  VALUES ($1, $2, $3, $4, $5)`
-	result, err := db.Exec(query, publicKey, username, email, false, false)
+	query := `INSERT INTO users (key, username, email, verified, administrator, birth_date)
+			  VALUES ($1, $2, $3, $4, $5, $6)`
+	result, err := db.Exec(query, publicKey, username, email, false, false, birthDate)
 
 	if err != nil {
 		log.Errorf("failed to insert user: %v", err)
