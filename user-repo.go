@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/log"
 )
@@ -16,6 +17,7 @@ type SavedUser struct {
 	followers       int
 	followed        int
 	id              int64
+	createdAt       time.Time
 }
 
 func SaveUser(db *sql.DB, publicKey string, username string, email string) (int64, error) {
@@ -112,7 +114,8 @@ func CreateUserTable(db *sql.DB) {
 		verified BOOLEAN NOT NULL,
 		administrator BOOLEAN NOT NULL,
 		followers INTEGER DEFAULT 0,
-		followed INTEGER DEFAULT 0
+		followed INTEGER DEFAULT 0,
+		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	_, err := db.Exec(createTableSQL)
