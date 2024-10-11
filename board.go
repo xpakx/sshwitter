@@ -198,6 +198,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if index == len(m.tabs) && index != 0 {
 			m.currentTab = m.currentTab - 1
 		}
+		m.user.description = sql.NullString{Valid: true, String: msg.description}
+		m.user.location = sql.NullString{Valid: true, String: msg.location}
 		return m, nil
 	}
 	if len(m.tabs) > 0 {
