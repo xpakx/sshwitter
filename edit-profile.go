@@ -20,6 +20,7 @@ type EditProfileModel struct {
 	subheaderStyle lipgloss.Style
 	buttonStyle    lipgloss.Style
 	db             *sql.DB
+	user           SavedUser
 }
 
 func getEditProfileModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) Tab {
@@ -51,6 +52,7 @@ func getEditProfileModel(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser
 			subheaderStyle:   subheaderStyle,
 			buttonStyle:      buttonStyle,
 			db:               db,
+			user:             user,
 		},
 		Name: "Edit profile",
 	}
@@ -90,7 +92,17 @@ func (m EditProfileModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.input = true
 					return m, m.locationInput.Focus()
 				} else if m.current == 2 {
-					return m, nextPage
+					if !m.Valid() {
+						return m, nil
+					}
+					desc := m.descriptionInput.Input.Value()
+					loc := m.locationInput.Input.Value()
+					
+					err := UpdateUserData(m.db, m.user, desc, loc)
+					if err != nil {
+						return m, nil
+					}
+					return m, closeEdit(desc, loc)
 				}
 			} else {
 				m.descriptionInput.Blur()

@@ -181,6 +181,24 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tabs = append(m.tabs, getEditProfileModel(m.renderer, m.db, m.user))
 		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
 		return m, nil
+	case CloseEditMsg:
+		found := false
+		index := 0
+		for i, tab  := range m.tabs {
+			if tab.Name == "Edit profile" {
+				index = i
+				found = true
+				break
+			}
+		}
+		if !found {
+			return m, nil
+		}
+		m.tabs = append(m.tabs[:index], m.tabs[index+1:]...)
+		if index == len(m.tabs) && index != 0 {
+			m.currentTab = m.currentTab - 1
+		}
+		return m, nil
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -281,4 +299,15 @@ type EditProfileMsg struct {}
 
 func editProfile() tea.Msg {
 	return EditProfileMsg{}
+}
+
+type CloseEditMsg struct {
+	description string
+	location string
+}
+
+func closeEdit(description string, location string) tea.Cmd {
+	return func() tea.Msg {
+		return CloseEditMsg{description: description, location: location}
+	}
 }

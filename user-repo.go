@@ -165,10 +165,10 @@ func GetUnverifiedUsers(db *sql.DB) ([]SavedUser, error) {
 	return findQuery(db, query)
 }
 
-func UpdateUserData(db *sql.DB, user SavedUser) error {
+func UpdateUserData(db *sql.DB, user SavedUser, description string, location string) error {
 	query := `UPDATE users SET description = $2, location = $3 WHERE id = $1`
 
-	_, err := db.Exec(query, user.id, user.description, user.location)
+	_, err := db.Exec(query, user.id, description, location)
 	if err != nil {
 		log.Errorf("failed to update user info status: %v", err)
 		return fmt.Errorf("failed to update user info status: %v", err)
