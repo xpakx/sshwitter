@@ -114,6 +114,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tabMove(left)
 		case "alt+;", "alt+right":
 			return m, tabMove(right)
+		case "alt+e":
+			return m, editProfile
 		}
 	case tea.WindowSizeMsg:
 		m.lastResize = msg
@@ -169,6 +171,15 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if msg.dir == right {
 			m.currentTab = min(m.currentTab + 1, len(m.tabs)-1);
 		}
+		return m, nil
+	case EditProfileMsg:
+		for _, tab  := range m.tabs {
+			if tab.Name == "Edit profile" {
+				return m, nil
+			}
+		}
+		m.tabs = append(m.tabs, getEditProfileModel(m.renderer, m.db, m.user))
+		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
 		return m, nil
 	}
 	if len(m.tabs) > 0 {
@@ -264,4 +275,10 @@ func tabMove(dir Direction) tea.Cmd {
 	return func() tea.Msg {
 		return TabMoveMsg{dir: dir}
 	}
+}
+
+type EditProfileMsg struct {}
+
+func editProfile() tea.Msg {
+	return EditProfileMsg{}
 }
