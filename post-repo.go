@@ -206,3 +206,30 @@ func FindLikedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 
 	return posts, nil
 }
+
+func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
+	var post Post
+	log.Debug("Fetching post from db")
+	query := `
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
+	FROM posts p
+	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
+	LEFT JOIN users u ON p.user_id = u.id
+	WHERE l.user_id IS NOT NULL
+	AND p.id = $2`
+
+	err := db.QueryRow(query, username, id).
+		Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Debug("No post found")
+			return Post{}, false
+		}
+		log.Errorf("Error while fetching post: %s", err)
+		return Post{}, false
+	}
+
+	return post, true
+}
