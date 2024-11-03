@@ -201,6 +201,10 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.user.description = sql.NullString{Valid: true, String: msg.description}
 		m.user.location = sql.NullString{Valid: true, String: msg.location}
 		return m, nil
+	case OpenPostMsg:
+		m.tabs = append(m.tabs, getPostView(m.renderer, m.db, msg.postId, m.user))
+		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
+		return m, nil
 	}
 	if len(m.tabs) > 0 {
 		m.tabs[m.currentTab].Model, cmd = m.tabs[m.currentTab].Model.Update(msg)
@@ -311,5 +315,15 @@ type CloseEditMsg struct {
 func closeEdit(description string, location string) tea.Cmd {
 	return func() tea.Msg {
 		return CloseEditMsg{description: description, location: location}
+	}
+}
+
+type OpenPostMsg struct {
+	postId int64
+}
+
+func openPost(postId int64) tea.Cmd {
+	return func() tea.Msg {
+		return OpenPostMsg{postId: postId}
 	}
 }

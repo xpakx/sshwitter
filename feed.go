@@ -158,7 +158,7 @@ func (m FeedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "k", "j":
 				m.posts, m.viewport = UpdateTimeline(m.posts, m.viewport, msg)
 				return m, nil
-			case "a":
+			case "a", "g":
 				var cmd tea.Cmd
 				m.posts, cmd = m.posts.Update(msg)
 				return m, cmd
