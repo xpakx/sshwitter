@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -39,6 +40,8 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 	}
 	isOwner := user.id == post.userId
 
+	tabName := fmt.Sprintf("%s %d", post.username, post.id)
+
 	return Tab{
 		Model: PostViewModel{ 
 			infoStyle: infoStyle, 
@@ -53,7 +56,7 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 			post: post,
 			isOwner: isOwner,
 		},
-		Name: post.username,
+		Name: tabName,
 	}
 }
 
