@@ -216,7 +216,7 @@ func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id 
 	LEFT JOIN users u ON p.user_id = u.id
-	WHERE l.user_id IS NOT NULL AND u.username = $1
+	WHERE u.username = $1
 	AND p.id = $2`
 
 	err := db.QueryRow(query, username, id).

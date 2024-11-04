@@ -36,7 +36,7 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 	post, postFound :=  GetPostById(db, postId, user.username)
 
 	if (!postFound) {
-		log.Info("No such post")
+		log.Infof("No post with id %d", postId)
 		// TODO: 404 page
 	}
 	isOwner := user.id == post.userId
