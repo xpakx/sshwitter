@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
@@ -42,6 +43,15 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 
 	tabName := fmt.Sprintf("%s %d", post.username, post.id)
 
+	textInput := textarea.New()
+	textInput.Placeholder = "Type a message..."
+
+	textInput.CharLimit = 280
+	textInput.SetWidth(30)
+	textInput.SetHeight(3)
+	textInput.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	textInput.ShowLineNumbers = false
+
 	return Tab{
 		Model: PostViewModel{ 
 			infoStyle: infoStyle, 
@@ -55,6 +65,8 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 			user: user,
 			post: post,
 			isOwner: isOwner,
+			textarea: textInput,
+			inputOpened: false,
 		},
 		Name: tabName,
 	}
@@ -74,6 +86,8 @@ type PostViewModel struct {
 	width        int
 	infoWidth    int
 	isOwner      bool
+	textarea     textarea.Model
+	inputOpened  bool
 }
 
 func (m PostViewModel) Init() tea.Cmd {
@@ -86,6 +100,36 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
 		return m, nil
+	case tea.KeyMsg:
+		if m.textarea.Focused() {
+			switch msg.String() {
+			case "esc":
+				m.textarea.Blur()
+				m.inputOpened = false
+				return m, nil
+			case "enter":
+				m.textarea.Blur()
+				m.inputOpened = false
+				text := m.textarea.Value()
+				m.textarea.Reset()
+				if (text == "") { 
+					return m, nil
+				}
+				SavePost(m.db, m.user, text)
+				return m, nil
+			default:
+				var cmd tea.Cmd
+				m.textarea, cmd = m.textarea.Update(msg)
+				return m, cmd
+			}
+		} else {
+			switch msg.String() {
+			case "p":
+				m.inputOpened = true
+				return m, m.textarea.Focus()
+			}
+		}
+
 	}
 	return m, nil
 }
@@ -109,5 +153,10 @@ func (m PostViewModel) View() string {
 	doc.WriteString(m.numberStyle.Render("0"))
 	doc.WriteString(m.quitStyle.Render(" Replies"))
 	doc.WriteString("\n")
+
+	if m.inputOpened {
+		doc.WriteString(m.textarea.View())
+		doc.WriteString("\n")
+	}
 	return doc.String()
 }
