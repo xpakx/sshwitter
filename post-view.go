@@ -39,6 +39,18 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 		log.Infof("No post with id %d", postId)
 		// TODO: 404 page
 	}
+
+	var parent Post
+	hasParent := false
+
+	if (post.parentId.Valid) {
+		parentId := post.parentId.Int64
+		parent, hasParent =  GetPostById(db, parentId, user.username)
+		if (!hasParent) {
+			log.Infof("No post with id %d", parentId)
+		}
+	}
+
 	isOwner := user.id == post.userId
 
 	tabName := fmt.Sprintf("%s %d", post.username, post.id)
@@ -67,6 +79,8 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 			isOwner: isOwner,
 			textarea: textInput,
 			inputOpened: false,
+			parent: parent,
+			hasParent: hasParent,
 		},
 		Name: tabName,
 	}
@@ -88,6 +102,8 @@ type PostViewModel struct {
 	isOwner      bool
 	textarea     textarea.Model
 	inputOpened  bool
+	hasParent    bool
+	parent       Post
 }
 
 func (m PostViewModel) Init() tea.Cmd {
@@ -137,6 +153,29 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m PostViewModel) View() string {
 	post := m.post
 	doc := strings.Builder{}
+
+	if (m.hasParent) {
+		parent := m.parent
+		doc.WriteString(m.headerStyle.Render(parent.username))
+		doc.WriteString(m.quitStyle.Render(" · "))
+		doc.WriteString(m.quitStyle.Render(RelativeTime(parent.createdAt)))
+		doc.WriteString("\n")
+
+		doc.WriteString(parent.content)
+		doc.WriteString("\n")
+		if (parent.liked) {
+			doc.WriteString(m.quitStyle.Render("❤ "))
+		}
+		doc.WriteString(m.numberStyle.Render(strconv.Itoa(parent.likes)))
+		doc.WriteString(m.quitStyle.Render(" Likes"))
+		doc.WriteString("  ")
+		doc.WriteString(m.numberStyle.Render("0"))
+		doc.WriteString(m.quitStyle.Render(" Replies"))
+		doc.WriteString("\n")
+	}
+
+
+
 	doc.WriteString(m.headerStyle.Render(post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
 	doc.WriteString(m.quitStyle.Render(RelativeTime(post.createdAt)))
