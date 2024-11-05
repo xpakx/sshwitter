@@ -151,31 +151,23 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m PostViewModel) View() string {
-	post := m.post
 	doc := strings.Builder{}
 
 	if (m.hasParent) {
-		parent := m.parent
-		doc.WriteString(m.headerStyle.Render(parent.username))
-		doc.WriteString(m.quitStyle.Render(" · "))
-		doc.WriteString(m.quitStyle.Render(RelativeTime(parent.createdAt)))
-		doc.WriteString("\n")
-
-		doc.WriteString(parent.content)
-		doc.WriteString("\n")
-		if (parent.liked) {
-			doc.WriteString(m.quitStyle.Render("❤ "))
-		}
-		doc.WriteString(m.numberStyle.Render(strconv.Itoa(parent.likes)))
-		doc.WriteString(m.quitStyle.Render(" Likes"))
-		doc.WriteString("  ")
-		doc.WriteString(m.numberStyle.Render("0"))
-		doc.WriteString(m.quitStyle.Render(" Replies"))
-		doc.WriteString("\n")
+		m.postView(&doc, m.parent)
 	}
 
+	m.postView(&doc, m.post)
+
+	if m.inputOpened {
+		doc.WriteString(m.textarea.View())
+		doc.WriteString("\n")
+	}
+	return doc.String()
+}
 
 
+func (m PostViewModel) postView(doc *strings.Builder, post Post) {
 	doc.WriteString(m.headerStyle.Render(post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
 	doc.WriteString(m.quitStyle.Render(RelativeTime(post.createdAt)))
@@ -192,10 +184,4 @@ func (m PostViewModel) View() string {
 	doc.WriteString(m.numberStyle.Render("0"))
 	doc.WriteString(m.quitStyle.Render(" Replies"))
 	doc.WriteString("\n")
-
-	if m.inputOpened {
-		doc.WriteString(m.textarea.View())
-		doc.WriteString("\n")
-	}
-	return doc.String()
 }
