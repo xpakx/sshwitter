@@ -131,7 +131,7 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if (text == "") { 
 					return m, nil
 				}
-				SavePost(m.db, m.user, text)
+				ReplyToPost(m.db, m.user, m.post, text)
 				return m, nil
 			default:
 				var cmd tea.Cmd

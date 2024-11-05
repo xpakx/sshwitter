@@ -267,3 +267,21 @@ func FindReplies(db *sql.DB, id int64, viewer SavedUser) ([]Post, error) {
 
 	return posts, nil
 }
+
+func ReplyToPost(db *sql.DB, user SavedUser, post Post, content string) (int64, error) {
+	log.Info("Saving reply to db")
+	var id int64
+	query := `INSERT INTO posts (content, user_id, parent_id)
+        VALUES ($1, $2, $3)
+	RETURNING id`
+	err := db.QueryRow(query, content, user.id, post.id).
+		Scan(&id)
+
+	if err != nil {
+		log.Errorf("failed to insert post: %v", err)
+		return 0, fmt.Errorf("failed to insert post: %v", err)
+	}
+
+	log.Info("Saved new reply")
+	return id, nil
+}
