@@ -214,7 +214,8 @@ func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
 	log.Debug("Fetching post from db")
 	query := `
 	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
-	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
+	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked,
+	       p.parent_id
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id 
 	LEFT JOIN users u ON p.user_id = u.id
@@ -222,7 +223,7 @@ func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
 	AND p.id = $2`
 
 	err := db.QueryRow(query, username, id).
-		Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked)
+		Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked, &post.parentId)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
