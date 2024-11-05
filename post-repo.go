@@ -16,6 +16,7 @@ type Post struct {
 	username        string
 	createdAt       time.Time
 	liked           bool
+	parentId        sql.NullInt64
 }
 
 func CreatePostTable(db *sql.DB) {
@@ -25,7 +26,8 @@ func CreatePostTable(db *sql.DB) {
 		content TEXT NOT NULL,
 		user_id INTEGER REFERENCES users(id),
 		likes INTEGER DEFAULT 0,
-		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		parent_id INTEGER REFERENCES posts(id)
 	);`
 
 	_, err := db.Exec(createTableSQL)
