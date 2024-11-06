@@ -73,6 +73,9 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 	timeline.PushFront(post)
 	if (hasParent) {
 		timeline.PushFront(parent)
+		timeline.Highlight(1)
+	} else {
+		timeline.Highlight(0)
 	}
 
 	return Tab{

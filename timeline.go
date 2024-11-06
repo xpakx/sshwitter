@@ -42,21 +42,25 @@ func getTimeline(renderer *lipgloss.Renderer, db *sql.DB, posts []Post, user Sav
 		posts: posts,
 		user: user,
 		currentPost: 0,
+		hasHighlight: false,
+		highlighted: 0,
 	}
 }
 
 
 type TimelineModel struct {
-	quitStyle    lipgloss.Style
-	postStyle    lipgloss.Style
-	headerStyle  lipgloss.Style
-	numberStyle  lipgloss.Style
-	posts        []Post
-	indices      []PostIndice
-	user         SavedUser
-	db           *sql.DB
-	width        int
-	currentPost  int
+	quitStyle       lipgloss.Style
+	postStyle       lipgloss.Style
+	headerStyle     lipgloss.Style
+	numberStyle     lipgloss.Style
+	posts           []Post
+	indices         []PostIndice
+	user            SavedUser
+	db              *sql.DB
+	width           int
+	currentPost     int
+	hasHighlight    bool
+	highlighted     int
 }
 
 type PostIndice struct {
@@ -103,7 +107,7 @@ func (m *TimelineModel) View() string {
 	start := 0
 	m.indices = make([]PostIndice, len(m.posts))
 	for i, post := range m.posts {
-		postView := m.postView(post, m.currentPost == i)
+		postView := m.postView(post, i)
 		posts = append(posts, postView)
 		m.indices[i].start = start
 		m.indices[i].len = strings.Count(postView, "\n") + 1
@@ -138,7 +142,10 @@ func RelativeTime(t time.Time) string {
 	}
 }
 
-func (m TimelineModel) postView(post Post, current bool) string {
+func (m TimelineModel) postView(post Post, index int) string {
+	current := m.currentPost == index
+	last := index + 1 < len(m.posts)
+	highlighted := m.hasHighlight && m.highlighted == index
 	doc := strings.Builder{}
 	doc.WriteString(m.headerStyle.Render(post.username))
 	doc.WriteString(m.quitStyle.Render(" · "))
@@ -148,7 +155,11 @@ func (m TimelineModel) postView(post Post, current bool) string {
 	}
 	doc.WriteString("\n")
 
-	doc.WriteString(post.content)
+	if (highlighted) {
+		doc.WriteString(m.headerStyle.Render(post.content))
+	} else {
+		doc.WriteString(post.content)
+	}
 	doc.WriteString("\n")
 	if (post.liked) {
 		doc.WriteString(m.quitStyle.Render("❤ "))
@@ -159,6 +170,11 @@ func (m TimelineModel) postView(post Post, current bool) string {
 	doc.WriteString(m.numberStyle.Render("0"))
 	doc.WriteString(m.quitStyle.Render(" Replies"))
 	doc.WriteString("\n")
+
+	if (highlighted && !last) {
+		doc.WriteString("\n")
+		doc.WriteString(m.quitStyle.Render("Replies"))
+	}
 	return doc.String()
 }
 
@@ -168,6 +184,11 @@ func (m *TimelineModel) Push(post Post) {
 
 func (m *TimelineModel) PushFront(post Post) {
 	m.posts = append([]Post{post}, m.posts...)
+}
+
+func (m *TimelineModel) Highlight(index int) {
+	m.hasHighlight = true
+	m.highlighted = index
 }
 
 func UpdateTimeline(posts TimelineModel, viewport viewport.Model, msg tea.KeyMsg) (TimelineModel, viewport.Model) {
