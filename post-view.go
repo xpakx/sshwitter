@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
@@ -64,6 +65,13 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 	textInput.FocusedStyle.CursorLine = lipgloss.NewStyle()
 	textInput.ShowLineNumbers = false
 
+	posts, err := FindReplies(db, post.id, user)
+	if err != nil {
+		log.Error(err)
+	}
+	timeline := getTimeline(renderer, db, posts, user)
+	vp := viewport.New(20, 15)
+
 	return Tab{
 		Model: PostViewModel{ 
 			infoStyle: infoStyle, 
@@ -81,6 +89,8 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 			inputOpened: false,
 			parent: parent,
 			hasParent: hasParent,
+			posts: timeline,
+			viewport: vp,
 		},
 		Name: tabName,
 	}
@@ -104,6 +114,8 @@ type PostViewModel struct {
 	inputOpened  bool
 	hasParent    bool
 	parent       Post
+	posts        TimelineModel
+	viewport     viewport.Model
 }
 
 func (m PostViewModel) Init() tea.Cmd {
@@ -115,6 +127,10 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg: 
 		m.width = msg.Width
+		m.posts.width = max(m.width - (m.infoWidth + 1), 20) - 2
+		m.viewport.Width = m.posts.width
+		m.viewport.Height = msg.Height - 5
+		m.viewport.SetContent(m.posts.View())
 		return m, nil
 	case tea.KeyMsg:
 		if m.textarea.Focused() {
@@ -163,6 +179,7 @@ func (m PostViewModel) View() string {
 		doc.WriteString(m.textarea.View())
 		doc.WriteString("\n")
 	}
+	doc.WriteString(m.viewport.View())
 	return doc.String()
 }
 
