@@ -162,8 +162,11 @@ func (m TimelineModel) postView(post Post, current bool) string {
 	return doc.String()
 }
 
-
 func (m *TimelineModel) Push(post Post) {
+	m.posts = append([]Post{post}, m.posts...)
+}
+
+func (m *TimelineModel) PushFront(post Post) {
 	m.posts = append([]Post{post}, m.posts...)
 }
 

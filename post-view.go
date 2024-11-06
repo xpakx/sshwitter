@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
@@ -71,6 +70,10 @@ func getPostView(renderer *lipgloss.Renderer, db *sql.DB, postId int64, user Sav
 	}
 	timeline := getTimeline(renderer, db, posts, user)
 	vp := viewport.New(20, 15)
+	timeline.PushFront(post)
+	if (hasParent) {
+		timeline.PushFront(parent)
+	}
 
 	return Tab{
 		Model: PostViewModel{ 
@@ -168,37 +171,11 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m PostViewModel) View() string {
 	doc := strings.Builder{}
-
-	if (m.hasParent) {
-		m.postView(&doc, m.parent)
-	}
-
-	m.postView(&doc, m.post)
+	doc.WriteString(m.viewport.View())
 
 	if m.inputOpened {
 		doc.WriteString(m.textarea.View())
 		doc.WriteString("\n")
 	}
-	doc.WriteString(m.viewport.View())
 	return doc.String()
-}
-
-
-func (m PostViewModel) postView(doc *strings.Builder, post Post) {
-	doc.WriteString(m.headerStyle.Render(post.username))
-	doc.WriteString(m.quitStyle.Render(" · "))
-	doc.WriteString(m.quitStyle.Render(RelativeTime(post.createdAt)))
-	doc.WriteString("\n")
-
-	doc.WriteString(post.content)
-	doc.WriteString("\n")
-	if (post.liked) {
-		doc.WriteString(m.quitStyle.Render("❤ "))
-	}
-	doc.WriteString(m.numberStyle.Render(strconv.Itoa(post.likes)))
-	doc.WriteString(m.quitStyle.Render(" Likes"))
-	doc.WriteString("  ")
-	doc.WriteString(m.numberStyle.Render("0"))
-	doc.WriteString(m.quitStyle.Render(" Replies"))
-	doc.WriteString("\n")
 }
