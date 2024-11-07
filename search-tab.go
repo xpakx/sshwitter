@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 func getSearchView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Tab) {
@@ -64,6 +65,7 @@ type SearchViewModel struct {
 	infoWidth    int
 	nameInput    CustomInput
 	input        bool
+	users        []SavedUser
 }
 
 func (m SearchViewModel) Init() tea.Cmd {
@@ -78,16 +80,46 @@ func (m SearchViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "p":
+			if (!m.input) {
+				return m, nil
+			}
+		case "esc":
+			m.nameInput.Blur()
+			m.input = false
 			return m, nil
+		case "enter": 
+		        if(!m.input) {
+				m.input = true
+				return m, m.nameInput.Focus()
+			} else {
+				m.nameInput.Blur()
+				searchQuery := m.nameInput.Input.Value()
+				m.input = false;
+				users, err := SearchUsers(m.db, searchQuery)
+				if (err == nil) {
+					m.users =  users
+				} else {
+					log.Info(err)
+				}
+				return m, nil
+			}
 		}
-
 	}
-	return m, nil
+
+	var cmd tea.Cmd
+	m.nameInput, cmd = m.nameInput.Update(msg)
+	return m, cmd
 }
+
 
 func (m SearchViewModel) View() string {
 	doc := strings.Builder{}
 	name := m.nameInput.View(false)
 	doc.WriteString(name)
+	if (len(m.users) != 0) {
+		for _, user := range m.users {
+			doc.WriteString(user.username)
+		}
+	}
 	return doc.String()
 }
