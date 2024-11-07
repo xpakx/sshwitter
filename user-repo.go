@@ -176,3 +176,27 @@ func UpdateUserData(db *sql.DB, user SavedUser, description string, location str
 
 	return nil
 }
+
+func SearchUsers(db *sql.DB, search string) ([]SavedUser, error) {
+	query := `SELECT id, key, username, email, verified, administrator, followers, followed, created_at FROM users WHERE  username LIKE '%' || $1 || '%'`
+	rows, err := db.Query(query, search)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []SavedUser
+	for rows.Next() {
+		var user SavedUser
+		if err := rows.Scan(&user.id, &user.key, &user.username, &user.email, &user.verified, &user.administrator, &user.followers, &user.followed, &user.createdAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
