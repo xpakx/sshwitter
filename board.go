@@ -110,6 +110,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, openFeed(likedFeed)
 		case "alt+H":
 			return m, openHome
+		case "alt+s":
+			return m, openSearch
 		case "alt+h", "alt+left":
 			return m, tabMove(left)
 		case "alt+;", "alt+right":
@@ -203,6 +205,10 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case OpenPostMsg:
 		m.tabs = append(m.tabs, getPostView(m.renderer, m.db, msg.postId, m.user))
+		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
+		return m, nil
+	case OpenSearch:
+		m.tabs = append(m.tabs, getSearchView(m.renderer, m.db, m.user))
 		m.tabs[len(m.tabs)-1].Model, cmd = m.tabs[len(m.tabs)-1].Model.Update(m.lastResize)
 		return m, nil
 	}
@@ -326,4 +332,10 @@ func openPost(postId int64) tea.Cmd {
 	return func() tea.Msg {
 		return OpenPostMsg{postId: postId}
 	}
+}
+
+type OpenSearch struct {}
+
+func openSearch() tea.Msg {
+	return OpenSearch{}
 }
