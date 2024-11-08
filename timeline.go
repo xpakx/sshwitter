@@ -167,7 +167,7 @@ func (m TimelineModel) postView(post Post, index int) string {
 	doc.WriteString(m.numberStyle.Render(strconv.Itoa(post.likes)))
 	doc.WriteString(m.quitStyle.Render(" Likes"))
 	doc.WriteString("  ")
-	doc.WriteString(m.numberStyle.Render("0"))
+	doc.WriteString(m.numberStyle.Render(strconv.Itoa(post.replies)))
 	doc.WriteString(m.quitStyle.Render(" Replies"))
 	doc.WriteString("\n")
 

@@ -13,6 +13,7 @@ type Post struct {
 	userId          int64
 	content         string
 	likes           int
+	replies         int
 	username        string
 	createdAt       time.Time
 	liked           bool
@@ -26,6 +27,7 @@ func CreatePostTable(db *sql.DB) {
 		content TEXT NOT NULL,
 		user_id INTEGER REFERENCES users(id),
 		likes INTEGER DEFAULT 0,
+		replies INTEGER DEFAULT 0,
 		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		parent_id INTEGER REFERENCES posts(id)
 	);`
@@ -85,7 +87,7 @@ func DeletePost(db *sql.DB, post Post, user SavedUser) error {
 
 func FindUserPosts(db *sql.DB, user SavedUser, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, 
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
 	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $2
@@ -102,7 +104,7 @@ func FindUserPosts(db *sql.DB, user SavedUser, viewer SavedUser) ([]Post, error)
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
@@ -117,7 +119,7 @@ func FindUserPosts(db *sql.DB, user SavedUser, viewer SavedUser) ([]Post, error)
 
 func FindAllPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
 	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
@@ -133,7 +135,7 @@ func FindAllPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
@@ -148,7 +150,7 @@ func FindAllPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 
 func FindFollowedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
 	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
 	INNER JOIN follows f ON f.followed_id = p.user_id AND f.user_id = $1
@@ -165,7 +167,7 @@ func FindFollowedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
@@ -180,7 +182,7 @@ func FindFollowedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 
 func FindLikedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
 	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
@@ -196,7 +198,7 @@ func FindLikedPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
@@ -213,7 +215,7 @@ func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
 	var post Post
 	log.Debug("Fetching post from db")
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
 	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked,
 	       p.parent_id
 	FROM posts p
@@ -223,7 +225,7 @@ func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
 	AND p.id = $2`
 
 	err := db.QueryRow(query, username, id).
-		Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked, &post.parentId)
+		Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked, &post.parentId)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -239,7 +241,7 @@ func GetPostById(db *sql.DB, id int64, username string) (Post, bool) {
 
 func FindReplies(db *sql.DB, id int64, viewer SavedUser) ([]Post, error) {
 	query := `
-	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes,
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
 	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
 	FROM posts p
 	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
@@ -256,7 +258,7 @@ func FindReplies(db *sql.DB, id int64, viewer SavedUser) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.liked); err != nil {
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked); err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
