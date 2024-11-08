@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,7 +31,7 @@ func getSearchView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Tab
 	numberStyle := quitStyle.
 		Bold(true)
 
-	nameInput := CreateCustomInput(renderer, "Search", "name", nameValidator, true)
+	nameInput := CreateCustomInput(renderer, "Search", "name", searchQueryValidator, true)
 
 
 	return Tab{
@@ -111,7 +112,6 @@ func (m SearchViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-
 func (m SearchViewModel) View() string {
 	doc := strings.Builder{}
 	name := m.nameInput.View(false)
@@ -123,4 +123,11 @@ func (m SearchViewModel) View() string {
 		}
 	}
 	return doc.String()
+}
+
+func searchQueryValidator(s string) error {
+	if len(s) == 0 {
+		return fmt.Errorf("cannot be empty")
+	}
+	return nil
 }
