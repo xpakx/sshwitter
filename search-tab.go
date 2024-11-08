@@ -117,10 +117,15 @@ func (m SearchViewModel) View() string {
 	name := m.nameInput.View(false)
 	doc.WriteString(name)
 	if (len(m.users) != 0) {
+		doc.WriteString("\n")
+		doc.WriteString(m.quitStyle.Render("Results"))
 		for _, user := range m.users {
 			doc.WriteString("\n")
 			doc.WriteString(user.username)
 		}
+	} else {
+		doc.WriteString("\n")
+		doc.WriteString(m.quitStyle.Render("No results"))
 	}
 	return doc.String()
 }
