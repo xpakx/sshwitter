@@ -144,11 +144,13 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc":
 				m.textarea.Blur()
 				m.inputOpened = false
+				m.viewport.Height = m.viewport.Height + 4
 				return m, nil
 			case "enter":
 				m.textarea.Blur()
 				m.inputOpened = false
 				text := m.textarea.Value()
+				m.viewport.Height = m.viewport.Height + 4
 				m.textarea.Reset()
 				if (text == "") { 
 					return m, nil
@@ -164,6 +166,7 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "p":
 				m.inputOpened = true
+				m.viewport.Height = m.viewport.Height - 4
 				return m, m.textarea.Focus()
 			}
 		}
@@ -174,11 +177,12 @@ func (m PostViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m PostViewModel) View() string {
 	doc := strings.Builder{}
-	doc.WriteString(m.viewport.View())
-
 	if m.inputOpened {
 		doc.WriteString(m.textarea.View())
 		doc.WriteString("\n")
 	}
+
+	doc.WriteString(m.viewport.View())
+
 	return doc.String()
 }

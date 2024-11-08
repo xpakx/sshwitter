@@ -118,6 +118,7 @@ func (m SearchViewModel) View() string {
 	doc.WriteString(name)
 	if (len(m.users) != 0) {
 		for _, user := range m.users {
+			doc.WriteString("\n")
 			doc.WriteString(user.username)
 		}
 	}
