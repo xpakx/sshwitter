@@ -274,10 +274,8 @@ func FindReplies(db *sql.DB, id int64, viewer SavedUser) ([]Post, error) {
 func ReplyToPost(db *sql.DB, user SavedUser, post Post, content string) (int64, error) {
 	log.Info("Saving reply to db")
 	var id int64
-	query := `INSERT INTO posts (content, user_id, parent_id)
-        VALUES ($1, $2, $3)
-	RETURNING id`
-	err := db.QueryRow(query, content, user.id, post.id).
+	query := `SELECT add_reply($1, $2, $3)`
+	err := db.QueryRow(query, user.id, post.id, content).
 		Scan(&id)
 
 	if err != nil {
@@ -287,4 +285,27 @@ func ReplyToPost(db *sql.DB, user SavedUser, post Post, content string) (int64, 
 
 	log.Info("Saved new reply")
 	return id, nil
+}
+
+func CreateReplyFunction(db *sql.DB) {
+	query := `
+	CREATE OR REPLACE FUNCTION add_reply(user_id_param INTEGER, post_id_param INTEGER, content_param TEXT) RETURNS INTEGER
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE 
+	        new_id INTEGER;
+	BEGIN
+		INSERT INTO posts (content, user_id, parent_id) 
+		VALUES (content_param, user_id_param, post_id_param) RETURNING id INTO new_id;
+		UPDATE posts SET replies = replies + 1 WHERE id = post_id_param;
+	        RETURN new_id;
+	END;
+	$$;`
+
+	_, err := db.Query(query)
+	if err != nil {
+		log.Fatalf("Failed to create procedure for inserting replies: %v", err)
+	}
+
+	log.Info("Procedure created successfully!")
 }
