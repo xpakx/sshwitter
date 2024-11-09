@@ -93,7 +93,13 @@ func (m SearchViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if (!m.inList) {
 					m.input = true
 					return m, m.nameInput.Focus()
-				} 
+				} else {
+					if (m.current == 0) {
+						return m, nil
+					}
+					curr := m.users[m.current-1]
+					return m, openProfile(curr.username)
+				}
 			} else {
 				m.nameInput.Blur()
 				searchQuery := m.nameInput.Input.Value()
