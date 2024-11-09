@@ -108,6 +108,8 @@ func (m BoardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, openFeed(followedFeed)
 		case "alt+l":
 			return m, openFeed(likedFeed)
+		case "alt+r":
+			return m, openFeed(repliesFeed)
 		case "alt+H":
 			return m, openHome
 		case "alt+s":
@@ -260,6 +262,7 @@ const (
         allFeed FeedType = iota
         followedFeed FeedType = iota
         likedFeed FeedType = iota
+        repliesFeed FeedType = iota
 )
 
 func openFeed(feed FeedType) tea.Cmd {
@@ -268,6 +271,7 @@ func openFeed(feed FeedType) tea.Cmd {
 			case allFeed: return OpenFeedMsg{name: "Feed", find: FindAllPosts};
 			case followedFeed: return OpenFeedMsg{name: "Follows", find: FindFollowedPosts};
 			case likedFeed: return OpenFeedMsg{name: "Likes", find: FindLikedPosts};
+			case repliesFeed: return OpenFeedMsg{name: "Replies", find: FindAllRepliesToUserPosts};
 			default: return OpenFeedMsg{name: "Feed", find: FindAllPosts};
 		}
 	}

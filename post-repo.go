@@ -247,7 +247,7 @@ func FindReplies(db *sql.DB, id int64, viewer SavedUser) ([]Post, error) {
 	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
 	LEFT JOIN users u
 	ON p.user_id = u.id
-	WHERe p.parent_id = $2
+	WHERE p.parent_id = $2
 	ORDER BY p.created_at DESC`
 	rows, err := db.Query(query, viewer.id, id)
 	if err != nil {
@@ -308,4 +308,36 @@ func CreateReplyFunction(db *sql.DB) {
 	}
 
 	log.Info("Procedure created successfully!")
+}
+
+func FindAllRepliesToUserPosts(db *sql.DB, viewer SavedUser) ([]Post, error) {
+	query := `
+	SELECT p.id, p.content, p.user_id, p.created_at, u.username, p.likes, p.replies,
+	       CASE WHEN l.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS liked
+	FROM posts p
+	LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = $1
+	LEFT JOIN users u ON p.user_id = u.id
+	RIGHT JOIN posts pa ON p.parent_id = pa.id
+	WHERE p.user_id = $1
+	ORDER BY p.created_at DESC`
+	rows, err := db.Query(query, viewer.id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		if err := rows.Scan(&post.id, &post.content, &post.userId, &post.createdAt, &post.username, &post.likes, &post.replies, &post.liked); err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
