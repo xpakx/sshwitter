@@ -47,6 +47,8 @@ func getSearchView(renderer *lipgloss.Renderer, db *sql.DB, user SavedUser) (Tab
 			user: user,
 			nameInput: nameInput,
 			input: false,
+			current: 0,
+			inList: false,
 		},
 		Name: "Search",
 	}
@@ -67,6 +69,8 @@ type SearchViewModel struct {
 	nameInput    CustomInput
 	input        bool
 	users        []SavedUser
+	current      int
+	inList       bool
 }
 
 func (m SearchViewModel) Init() tea.Cmd {
@@ -80,18 +84,16 @@ func (m SearchViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "p":
-			if (!m.input) {
-				return m, nil
-			}
 		case "esc":
 			m.nameInput.Blur()
 			m.input = false
 			return m, nil
 		case "enter": 
 		        if(!m.input) {
-				m.input = true
-				return m, m.nameInput.Focus()
+				if (!m.inList) {
+					m.input = true
+					return m, m.nameInput.Focus()
+				} 
 			} else {
 				m.nameInput.Blur()
 				searchQuery := m.nameInput.Input.Value()
@@ -101,6 +103,22 @@ func (m SearchViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.users =  users
 				} else {
 					log.Info(err)
+				}
+				return m, nil
+			}
+		case "j", "down": 
+		        if(!m.input) {
+				m.current = min(m.current + 1, len(m.users));
+				if (m.current > 0) {
+					m.inList = true
+				}
+				return m, nil
+			}
+		case "k", "up": 
+		        if(!m.input) {
+				m.current = max(m.current - 1, 0);
+				if (m.current == 0) {
+					m.inList = false
 				}
 				return m, nil
 			}
@@ -119,8 +137,13 @@ func (m SearchViewModel) View() string {
 	if (len(m.users) != 0) {
 		doc.WriteString("\n")
 		doc.WriteString(m.quitStyle.Render("Results"))
-		for _, user := range m.users {
+		for i, user := range m.users {
 			doc.WriteString("\n")
+			if (m.inList && m.current-1 == i) {
+				doc.WriteString("*")
+			} else {
+				doc.WriteString(" ")
+			}
 			doc.WriteString(user.username)
 		}
 	} else {
